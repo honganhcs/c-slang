@@ -1,24 +1,22 @@
 /* tslint:disable:max-classes-per-file */
 import { CharStreams, CommonTokenStream } from 'antlr4ts'
+import { ParserRuleContext } from 'antlr4ts/ParserRuleContext'
 import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import * as es from 'estree'
 
-import { CalcLexer } from '../lang/CalcLexer'
+import { CLexer } from '../lang/CLexer'
 import {
-  AdditionContext,
-  CalcParser,
-  DivisionContext,
+  AdditiveExpressionContext,
+  CastExpressionContext,
+  CParser,
   ExpressionContext,
-  MultiplicationContext,
-  NumberContext,
-  ParenthesesContext,
-  StartContext,
-  SubtractionContext
-} from '../lang/CalcParser'
-import { CalcVisitor } from '../lang/CalcVisitor'
+  MultiplicativeExpressionContext,
+  ProgramContext
+} from '../lang/CParser'
+import { CVisitor } from '../lang/CVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
 import { stripIndent } from '../utils/formatters'
 
@@ -107,7 +105,7 @@ export class TrailingCommaError implements SourceError {
   }
 }
 
-function contextToLocation(ctx: ExpressionContext): es.SourceLocation {
+function contextToLocation(ctx: ParserRuleContext): es.SourceLocation {
   return {
     start: {
       line: ctx.start.line,
@@ -119,8 +117,8 @@ function contextToLocation(ctx: ExpressionContext): es.SourceLocation {
     }
   }
 }
-class ExpressionGenerator implements CalcVisitor<es.Expression> {
-  visitNumber(ctx: NumberContext): es.Expression {
+class AdditiveExpressionGenerator implements CVisitor<es.Expression> {
+  visitCastExpression(ctx: CastExpressionContext): es.Expression {
     return {
       type: 'Literal',
       value: parseInt(ctx.text),
@@ -128,49 +126,38 @@ class ExpressionGenerator implements CalcVisitor<es.Expression> {
       loc: contextToLocation(ctx)
     }
   }
-  visitParentheses(ctx: ParenthesesContext): es.Expression {
-    return this.visit(ctx.expression())
-  }
-  visitMultiplication(ctx: MultiplicationContext): es.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '*',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-      loc: contextToLocation(ctx)
+  visitMultiplicativeExpression(ctx: MultiplicativeExpressionContext): es.Expression {
+    if (!ctx.multiplicativeExpression()) {
+      return this.visit(ctx.castExpression())
+    } else {
+      const op = ctx.Star() ? "*" : ctx.Mod() ? "%" : "/"
+      return {
+        type: 'BinaryExpression',
+        operator: op,
+        left: this.visit(ctx.multiplicativeExpression()!),
+        right: this.visit(ctx.castExpression()),
+        loc: contextToLocation(ctx)
+      }
     }
   }
-  visitDivision(ctx: DivisionContext): es.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '/',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-      loc: contextToLocation(ctx)
-    }
-  }
-  visitAddition(ctx: AdditionContext): es.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '+',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-      loc: contextToLocation(ctx)
-    }
-  }
-
-  visitSubtraction(ctx: SubtractionContext): es.Expression {
-    return {
-      type: 'BinaryExpression',
-      operator: '-',
-      left: this.visit(ctx._left),
-      right: this.visit(ctx._right),
-      loc: contextToLocation(ctx)
+  visitAdditiveExpression(ctx: AdditiveExpressionContext): es.Expression {
+    if (!ctx.additiveExpression()) {
+      return this.visit(ctx.multiplicativeExpression())
+    } else {
+      const op = ctx.Plus() ? "+" : "-"
+      return {
+        type: 'BinaryExpression',
+        operator: op,
+        left: this.visit(ctx.additiveExpression()!),
+        right: this.visit(ctx.multiplicativeExpression()),
+        loc: contextToLocation(ctx)
+      }
     }
   }
 
   visitExpression?: ((ctx: ExpressionContext) => es.Expression) | undefined
-  visitStart?: ((ctx: StartContext) => es.Expression) | undefined
+
+  visitProgram?: ((ctx: ProgramContext) => es.Expression) | undefined
 
   visit(tree: ParseTree): es.Expression {
     return tree.accept(this)
@@ -206,19 +193,22 @@ class ExpressionGenerator implements CalcVisitor<es.Expression> {
   }
 }
 
-function convertExpression(expression: ExpressionContext): es.Expression {
-  const generator = new ExpressionGenerator()
+function convertAdditiveExpression(expression: AdditiveExpressionContext): es.Expression {
+  const generator = new AdditiveExpressionGenerator()
   return expression.accept(generator)
 }
 
-function convertSource(expression: ExpressionContext): es.Program {
+function convertSource(program: ProgramContext): es.Program {
+  const addExp = program.blockItemList().blockItem()!.statement()!.expressionStatement()!
+    .expression()!.assignmentExpression()!.conditionalExpression()!.logicalOrExpression()!
+    .logicalAndExpression().equalityExpression().relationalExpression().additiveExpression()
   return {
     type: 'Program',
     sourceType: 'script',
     body: [
       {
         type: 'ExpressionStatement',
-        expression: convertExpression(expression)
+        expression: convertAdditiveExpression(addExp)
       }
     ]
   }
@@ -229,12 +219,12 @@ export function parse(source: string, context: Context) {
 
   if (context.variant === 'calc') {
     const inputStream = CharStreams.fromString(source)
-    const lexer = new CalcLexer(inputStream)
+    const lexer = new CLexer(inputStream)
     const tokenStream = new CommonTokenStream(lexer)
-    const parser = new CalcParser(tokenStream)
+    const parser = new CParser(tokenStream)
     parser.buildParseTree = true
     try {
-      const tree = parser.expression()
+      const tree = parser.program()
       program = convertSource(tree)
     } catch (error) {
       if (error instanceof FatalSyntaxError) {
