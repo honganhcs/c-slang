@@ -130,7 +130,7 @@ class AdditiveExpressionGenerator implements CVisitor<es.Expression> {
     if (!ctx.multiplicativeExpression()) {
       return this.visit(ctx.castExpression())
     } else {
-      const op = ctx.Star() ? "*" : ctx.Mod() ? "%" : "/"
+      const op = ctx.Star() ? '*' : ctx.Mod() ? '%' : '/'
       return {
         type: 'BinaryExpression',
         operator: op,
@@ -144,7 +144,7 @@ class AdditiveExpressionGenerator implements CVisitor<es.Expression> {
     if (!ctx.additiveExpression()) {
       return this.visit(ctx.multiplicativeExpression())
     } else {
-      const op = ctx.Plus() ? "+" : "-"
+      const op = ctx.Plus() ? '+' : '-'
       return {
         type: 'BinaryExpression',
         operator: op,
@@ -199,9 +199,19 @@ function convertAdditiveExpression(expression: AdditiveExpressionContext): es.Ex
 }
 
 function convertSource(program: ProgramContext): es.Program {
-  const addExp = program.blockItemList().blockItem()!.statement()!.expressionStatement()!
-    .expression()!.assignmentExpression()!.conditionalExpression()!.logicalOrExpression()!
-    .logicalAndExpression().equalityExpression().relationalExpression().additiveExpression()
+  const addExp = program
+    .blockItemList()
+    .blockItem()!
+    .statement()!
+    .expressionStatement()!
+    .expression()!
+    .assignmentExpression()!
+    .conditionalExpression()!
+    .logicalOrExpression()!
+    .logicalAndExpression()
+    .equalityExpression()
+    .relationalExpression()
+    .additiveExpression()
   return {
     type: 'Program',
     sourceType: 'script',
