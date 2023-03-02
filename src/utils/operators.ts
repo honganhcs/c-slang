@@ -1,4 +1,4 @@
-import { BinaryOperator, UnaryOperator } from 'estree'
+import { BinaryOperator, LogicalOperator, UnaryOperator } from 'estree'
 
 import { LazyBuiltIn } from '../createContext'
 import {
@@ -13,6 +13,12 @@ import { locationDummyNode } from './astCreator'
 import * as create from './astCreator'
 import { makeWrapper } from './makeWrapper'
 import * as rttc from './rttc'
+
+export type UnaryOp = UnaryOperator | "&" | "*"
+
+export type BinaryOp = BinaryOperator
+
+export type LogicalOp = LogicalOperator
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
@@ -125,7 +131,12 @@ export function boolOrErr(candidate: any, line: number, column: number) {
   }
 }
 
-export function unaryOp(operator: UnaryOperator, argument: any, line: number, column: number) {
+export function unaryOp(
+  operator: UnaryOp,
+  argument: any,
+  line: number,
+  column: number
+) {
   argument = forceIt(argument)
   const error = rttc.checkUnaryExpression(
     create.locationDummyNode(line, column),
@@ -139,20 +150,23 @@ export function unaryOp(operator: UnaryOperator, argument: any, line: number, co
   }
 }
 
-export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
+export function evaluateUnaryExpression(operator: UnaryOp, value: any) {
+  // TODO: handle & and *
   if (operator === '!') {
     return !value
   } else if (operator === '-') {
     return -value
-  } else if (operator === 'typeof') {
-    return typeof value
-  } else {
+  } else if (operator === '+') {
     return +value
+  } else if (operator === '&') {
+    return value
+  } else { // operator === '*'
+    return value
   }
 }
 
 export function binaryOp(
-  operator: BinaryOperator,
+  operator: BinaryOp,
   left: any,
   right: any,
   line: number,
@@ -173,7 +187,7 @@ export function binaryOp(
   }
 }
 
-export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
+export function evaluateBinaryExpression(operator: BinaryOp, left: any, right: any) {
   switch (operator) {
     case '+':
       return left + right
@@ -185,9 +199,9 @@ export function evaluateBinaryExpression(operator: BinaryOperator, left: any, ri
       return left / right
     case '%':
       return left % right
-    case '===':
+    case '==':
       return left === right
-    case '!==':
+    case '!=':
       return left !== right
     case '<=':
       return left <= right
@@ -197,6 +211,39 @@ export function evaluateBinaryExpression(operator: BinaryOperator, left: any, ri
       return left > right
     case '>=':
       return left >= right
+    default:
+      return undefined
+  }
+}
+
+export function logicalOp(
+  operator: LogicalOp,
+  left: any,
+  right: any,
+  line: number,
+  column: number
+) {
+  left = forceIt(left)
+  right = forceIt(right)
+  const error = rttc.checkLogicalExpression(
+    create.locationDummyNode(line, column),
+    operator,
+    left,
+    right
+  )
+  if (error === undefined) {
+    return evaluateLogialExpression(operator, left, right)
+  } else {
+    throw error
+  }
+}
+
+export function evaluateLogialExpression(operator: LogicalOp, left: any, right: any) {
+  switch (operator) {
+    case '||':
+      return left || right
+    case '&&':
+      return left && right
     default:
       return undefined
   }
