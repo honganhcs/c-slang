@@ -3,7 +3,7 @@ import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Context, Environment, Value } from '../types'
-import { evaluateBinaryExpression, evaluateUnaryExpression } from '../utils/operators'
+import { evaluateBinaryExpression, evaluateLogialExpression, evaluateUnaryExpression } from '../utils/operators'
 import * as rttc from '../utils/rttc'
 
 class Thunk {
@@ -100,7 +100,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     throw new Error(`not supported yet: ${node.type}`)
   },
 
-
   FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
     throw new Error(`not supported yet: ${node.type}`)
   },
@@ -123,7 +122,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
     const value = yield* actualValue(node.argument, context)
-
     const error = rttc.checkUnaryExpression(node, node.operator, value)
     if (error) {
       return handleRuntimeError(context, error)
@@ -146,7 +144,13 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const left = () => yield* actualValue(node.left, context)
+    const right = () => yield* actualValue(node.right, context)
+    const error = rttc.checkLogicalExpression(node, node.operator, left, right)
+    if (error) {
+      return handleRuntimeError(context, error)
+    }
+    return evaluateLogialExpression(node.operator, left, right)
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {
@@ -164,7 +168,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   ForStatement: function* (node: es.ForStatement, context: Context) {
     throw new Error(`not supported yet: ${node.type}`)
   },
-
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
     throw new Error(`not supported yet: ${node.type}`)
