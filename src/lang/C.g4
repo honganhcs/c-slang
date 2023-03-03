@@ -100,7 +100,6 @@ constantExpression
 
 declaration
     :   declarationSpecifiers initDeclaratorList ';'
-    |   functionDefinition
     ;
 
 declarationSpecifiers
@@ -279,8 +278,15 @@ declarationList
     |   declarationList declaration
     ;
 
+programItem
+    :   statement
+    |   declaration
+    |   functionDefinition
+    ;
+
 program
-    :   blockItemList
+    : programItem
+    | programItem program
     ;
 
 Break : 'break';
