@@ -52,6 +52,9 @@ export const checkUnaryExpression = (
   operator: UnaryOp,
   value: Value
 ) => {
+  // TODO: handle 
+  return undefined
+  /*
   if ((operator === '+' || operator === '-') && !isNumber(value)) {
     return new TypeError(node, '', 'number', typeOf(value))
   } else if (operator === '!' && !isBool(value)) {
@@ -63,6 +66,7 @@ export const checkUnaryExpression = (
   } else {
     return undefined
   }
+  */
 }
 
 export const checkBinaryExpression = (
@@ -71,6 +75,8 @@ export const checkBinaryExpression = (
   left: Value,
   right: Value
 ) => {
+  return undefined
+  /*
   switch (operator) {
     case '-':
     case '*':
@@ -100,6 +106,7 @@ export const checkBinaryExpression = (
     default:
       return
   }
+  */
 }
 
 export const checkLogicalExpression = (
@@ -108,19 +115,22 @@ export const checkLogicalExpression = (
   left: Value,
   right: Value
 ) => {
+  return undefined
+  /*
   switch (operator) {
     case '||':
     case '&&':
-      if (!isBool(left)) {
-        return new TypeError(node, LHS, 'boolean', typeOf(left))
-      } else if (!isBool(right)) {
-        return new TypeError(node, RHS, 'boolean', typeOf(right))
+      if (!isBool(left) && !isNumber(left)) {
+        return new TypeError(node, LHS, 'boolean or number', typeOf(left))
+      } else if (!isBool(right) && !isNumber(right)) {
+        return new TypeError(node, RHS, 'boolean or number', typeOf(right))
       } else {
         return
       }
     default:
       return
   }
+  */
 }
 
 export const checkIfStatement = (node: es.Node, test: Value) => {
