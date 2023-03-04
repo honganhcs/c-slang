@@ -76,13 +76,12 @@ logicalOrExpression
 
 conditionalExpression
     :   logicalOrExpression
-    |   logicalOrExpression ('?' expression ':' conditionalExpression)?
+    |   logicalOrExpression '?' expression ':' conditionalExpression
     ;
 
 assignmentExpression
     :   conditionalExpression
     |   unaryExpression assignmentOperator assignmentExpression
-    |   DigitSequence // for
     ;
 
 assignmentOperator
@@ -285,8 +284,7 @@ programItem
     ;
 
 program
-    : programItem
-    | programItem program
+    : programItem+
     ;
 
 Break : 'break';
