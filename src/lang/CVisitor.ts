@@ -54,6 +54,7 @@ import { ForExpressionContext } from './CParser'
 import { JumpStatementContext } from './CParser'
 import { FunctionDefinitionContext } from './CParser'
 import { DeclarationListContext } from './CParser'
+import { ProgramItemContext } from './CParser'
 import { ProgramContext } from './CParser'
 
 /**
@@ -427,6 +428,13 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitDeclarationList?: (ctx: DeclarationListContext) => Result
+
+  /**
+   * Visit a parse tree produced by `CParser.programItem`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitProgramItem?: (ctx: ProgramItemContext) => Result
 
   /**
    * Visit a parse tree produced by `CParser.program`.

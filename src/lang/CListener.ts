@@ -54,6 +54,7 @@ import { ForExpressionContext } from './CParser'
 import { JumpStatementContext } from './CParser'
 import { FunctionDefinitionContext } from './CParser'
 import { DeclarationListContext } from './CParser'
+import { ProgramItemContext } from './CParser'
 import { ProgramContext } from './CParser'
 
 /**
@@ -632,6 +633,17 @@ export interface CListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitDeclarationList?: (ctx: DeclarationListContext) => void
+
+  /**
+   * Enter a parse tree produced by `CParser.programItem`.
+   * @param ctx the parse tree
+   */
+  enterProgramItem?: (ctx: ProgramItemContext) => void
+  /**
+   * Exit a parse tree produced by `CParser.programItem`.
+   * @param ctx the parse tree
+   */
+  exitProgramItem?: (ctx: ProgramItemContext) => void
 
   /**
    * Enter a parse tree produced by `CParser.program`.
