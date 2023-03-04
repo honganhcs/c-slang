@@ -10,11 +10,19 @@ import * as es from 'estree'
 import { CLexer } from '../lang/CLexer'
 import {
   AdditiveExpressionContext,
+  AssignmentExpressionContext,
   CastExpressionContext,
+  ConditionalExpressionContext,
   CParser,
+  EqualityExpressionContext,
   ExpressionContext,
+  LogicalAndExpressionContext,
+  LogicalOrExpressionContext,
   MultiplicativeExpressionContext,
-  ProgramContext
+  ProgramContext,
+  ProgramItemContext,
+  RelationalExpressionContext,
+  StatementContext
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
@@ -117,29 +125,195 @@ function contextToLocation(ctx: ParserRuleContext): es.SourceLocation {
     }
   }
 }
-class AdditiveExpressionGenerator implements CVisitor<es.Expression> {
-  visitCastExpression(ctx: CastExpressionContext): es.Expression {
+
+class ProgramGenerator implements CVisitor<es.Program> {
+  visitProgram(ctx: ProgramContext): es.Program {
+    const items = ctx.programItem()
+    const programBody: (es.Statement | es.Directive | es.ModuleDeclaration)[] = []
+
+    for (let i = 0; i < items.length; i++) {
+      programBody.concat(this.visitProgramItem(items[i]).body)
+    }
     return {
-      type: 'Literal',
-      value: parseInt(ctx.text),
-      raw: ctx.text,
-      loc: contextToLocation(ctx)
+      type: 'Program',
+      sourceType: 'script',
+      body: programBody
     }
   }
-  visitMultiplicativeExpression(ctx: MultiplicativeExpressionContext): es.Expression {
-    if (!ctx.multiplicativeExpression()) {
-      return this.visit(ctx.castExpression())
+
+  visitProgramItem(ctx: ProgramItemContext): es.Program {
+    // TODO: add support for ModuleDeclaration
+    const generator = new StatementGenerator()
+    const stmt: es.Statement = ctx.statement()!.accept(generator)
+    return {
+      type: 'Program',
+      sourceType: 'script',
+      body: [stmt]
+    }
+  }
+
+  visit(tree: ParseTree): es.Program {
+    return tree.accept(this)
+  }
+
+  visitChildren(node: RuleNode): es.Program {
+    const programBody: (es.Statement | es.Directive | es.ModuleDeclaration)[] = []
+    for (let i = 0; i < node.childCount; i++) {
+      programBody.concat(node.getChild(i).accept(this).body)
+    }
+    return {
+      type: 'Program',
+      sourceType: 'script',
+      body: programBody
+    }
+  }
+
+  visitTerminal(node: TerminalNode): es.Program {
+    return node.accept(this)
+  }
+
+  visitErrorNode(node: ErrorNode): es.Program {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine
+        },
+        end: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine + 1
+        }
+      },
+      `invalid syntax ${node.text}`
+    )
+  }
+}
+
+class StatementGenerator implements CVisitor<es.Statement> {
+  visitStatement(ctx: StatementContext): es.Statement {
+    // TODO: add support for various types of statements
+    const generator = new ExpressionGenerator()
+    const expr: es.Expression = ctx.expressionStatement()!.expression()!.accept(generator)
+    return {
+      type: 'ExpressionStatement',
+      expression: expr
+    }
+  }
+
+  visit(tree: ParseTree): es.Statement {
+    return tree.accept(this)
+  }
+
+  visitChildren(node: RuleNode): es.Statement {
+    const blockBody: es.Statement[] = []
+    for (let i = 0; i < node.childCount; i++) {
+      blockBody.push(node.getChild(i).accept(this))
+    }
+    return {
+      type: 'BlockStatement',
+      body: blockBody
+    }
+  }
+
+  visitTerminal(node: TerminalNode): es.Statement {
+    return node.accept(this)
+  }
+
+  visitErrorNode(node: ErrorNode): es.Statement {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine
+        },
+        end: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine + 1
+        }
+      },
+      `invalid syntax ${node.text}`
+    )
+  }
+}
+
+class ExpressionGenerator implements CVisitor<es.Expression> {
+  visitExpression(ctx: ExpressionContext): es.Expression {
+    // TODO: add support for chained expressions
+    return this.visitAssignmentExpression(ctx.assignmentExpression())
+  }
+
+  visitAssignmentExpression(ctx: AssignmentExpressionContext): es.Expression {
+    // TODO: add support for assignment expression
+    return this.visitConditionalExpression(ctx.conditionalExpression()!)
+  }
+
+  visitConditionalExpression(ctx: ConditionalExpressionContext): es.Expression {
+    if (ctx.conditionalExpression()) {
+      return {
+        type: 'ConditionalExpression',
+        test: this.visitLogicalOrExpression(ctx.logicalOrExpression()),
+        alternate: this.visitConditionalExpression(ctx.conditionalExpression()!),
+        consequent: this.visitExpression(ctx.expression()!)
+      }
     } else {
-      const op = ctx.Star() ? '*' : ctx.Mod() ? '%' : '/'
+      return this.visitLogicalOrExpression(ctx.logicalOrExpression())
+    }
+  }
+
+  visitLogicalOrExpression(ctx: LogicalOrExpressionContext): es.Expression {
+    if (ctx.logicalOrExpression()) {
+      return {
+        type: 'LogicalExpression',
+        operator: '||',
+        left: this.visitLogicalOrExpression(ctx.logicalOrExpression()!),
+        right: this.visitLogicalAndExpression(ctx.logicalAndExpression()!)
+      }
+    } else {
+      return this.visitLogicalAndExpression(ctx.logicalAndExpression())
+    }
+  }
+
+  visitLogicalAndExpression(ctx: LogicalAndExpressionContext): es.Expression {
+    if (ctx.logicalAndExpression()) {
+      return {
+        type: 'LogicalExpression',
+        operator: '&&',
+        left: this.visitLogicalAndExpression(ctx.logicalAndExpression()!),
+        right: this.visitEqualityExpression(ctx.equalityExpression())
+      }
+    } else {
+      return this.visitEqualityExpression(ctx.equalityExpression())
+    }
+  }
+
+  visitEqualityExpression(ctx: EqualityExpressionContext): es.Expression {
+    if (ctx.equalityExpression()) {
+      const op = ctx.Equal() ? '==' : '!='
       return {
         type: 'BinaryExpression',
         operator: op,
-        left: this.visit(ctx.multiplicativeExpression()!),
-        right: this.visit(ctx.castExpression()),
-        loc: contextToLocation(ctx)
+        left: this.visitEqualityExpression(ctx.equalityExpression()!),
+        right: this.visitRelationalExpression(ctx.relationalExpression())
       }
+    } else {
+      return this.visitRelationalExpression(ctx.relationalExpression())
     }
   }
+
+  visitRelationalExpression(ctx: RelationalExpressionContext): es.Expression {
+    if (ctx.relationalExpression()) {
+      const op = ctx.Less() ? '<' : ctx.Greater() ? '>' : ctx.LessEqual() ? '<=' : '>='
+      return {
+        type: 'BinaryExpression',
+        operator: op,
+        left: this.visitRelationalExpression(ctx.relationalExpression()!),
+        right: this.visitAdditiveExpression(ctx.additiveExpression())
+      }
+    } else {
+      return this.visitAdditiveExpression(ctx.additiveExpression())
+    }
+  }
+
   visitAdditiveExpression(ctx: AdditiveExpressionContext): es.Expression {
     if (!ctx.additiveExpression()) {
       return this.visit(ctx.multiplicativeExpression())
@@ -155,9 +329,29 @@ class AdditiveExpressionGenerator implements CVisitor<es.Expression> {
     }
   }
 
-  visitExpression?: ((ctx: ExpressionContext) => es.Expression) | undefined
+  visitMultiplicativeExpression(ctx: MultiplicativeExpressionContext): es.Expression {
+    if (!ctx.multiplicativeExpression()) {
+      return this.visit(ctx.castExpression())
+    } else {
+      const op = ctx.Star() ? '*' : ctx.Mod() ? '%' : '/'
+      return {
+        type: 'BinaryExpression',
+        operator: op,
+        left: this.visit(ctx.multiplicativeExpression()!),
+        right: this.visit(ctx.castExpression()),
+        loc: contextToLocation(ctx)
+      }
+    }
+  }
 
-  visitProgram?: ((ctx: ProgramContext) => es.Expression) | undefined
+  visitCastExpression(ctx: CastExpressionContext): es.Expression {
+    return {
+      type: 'Literal',
+      value: parseInt(ctx.text),
+      raw: ctx.text,
+      loc: contextToLocation(ctx)
+    }
+  }
 
   visit(tree: ParseTree): es.Expression {
     return tree.accept(this)
@@ -193,35 +387,9 @@ class AdditiveExpressionGenerator implements CVisitor<es.Expression> {
   }
 }
 
-function convertAdditiveExpression(expression: AdditiveExpressionContext): es.Expression {
-  const generator = new AdditiveExpressionGenerator()
-  return expression.accept(generator)
-}
-
 function convertSource(program: ProgramContext): es.Program {
-  const addExp = program
-    .blockItemList()
-    .blockItem()!
-    .statement()!
-    .expressionStatement()!
-    .expression()!
-    .assignmentExpression()!
-    .conditionalExpression()!
-    .logicalOrExpression()!
-    .logicalAndExpression()
-    .equalityExpression()
-    .relationalExpression()
-    .additiveExpression()
-  return {
-    type: 'Program',
-    sourceType: 'script',
-    body: [
-      {
-        type: 'ExpressionStatement',
-        expression: convertAdditiveExpression(addExp)
-      }
-    ]
-  }
+  const generator = new ProgramGenerator()
+  return program.accept(generator)
 }
 
 export function parse(source: string, context: Context) {
