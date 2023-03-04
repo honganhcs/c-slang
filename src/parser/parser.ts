@@ -395,7 +395,7 @@ function convertSource(program: ProgramContext): es.Program {
 export function parse(source: string, context: Context) {
   let program: es.Program | undefined
 
-  if (context.variant === 'calc') {
+  if (context.variant === 'c') {
     const inputStream = CharStreams.fromString(source)
     const lexer = new CLexer(inputStream)
     const tokenStream = new CommonTokenStream(lexer)

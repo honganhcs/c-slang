@@ -2,7 +2,7 @@
   "name": "c-slang",
   "version": "1.0.10",
   "license": "Apache-2.0",
-  "description": "Calc language as a start point for CS4215's project",
+  "description": "C language as a start point for CS4215's project",
   "keywords": [
     "JavaScript",
     "interpreter",
