@@ -47,12 +47,8 @@ const isObject = (v: Value) => typeOf(v) === 'object'
 const isArray = (v: Value) => typeOf(v) === 'array'
 const isPointer = (v: Value) => true // TODO: handle 'pointer'
 
-export const checkUnaryExpression = (
-  node: es.Node,
-  operator: UnaryOp,
-  value: Value
-) => {
-  // TODO: handle 
+export const checkUnaryExpression = (node: es.Node, operator: UnaryOp, value: Value) => {
+  // TODO: handle
   return undefined
   /*
   if ((operator === '+' || operator === '-') && !isNumber(value)) {
