@@ -34,7 +34,6 @@ unaryOperator
 castExpression
     :   unaryExpression
     |   '(' typeName ')' castExpression
-    |   DigitSequence // TODO: decide whether to remove 
     ;
 
 multiplicativeExpression
