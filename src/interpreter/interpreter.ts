@@ -5,7 +5,6 @@ import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Context, Environment, Value } from '../types'
 import {
   evaluateBinaryExpression,
-  evaluateConditionalExpression,
   evaluateLogicalExpression,
   evaluateUnaryExpression
 } from '../utils/operators'
@@ -138,13 +137,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ConditionalExpression: function* (node: es.ConditionalExpression, context: Context) {
-    const test = yield* actualValue(node.test, context)
-    return evaluateConditionalExpression(test, node.alternate, node.consequent)
+    throw new Error(`not supported yet: ${node.type}`)
   },
 
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
     const left = yield* actualValue(node.left, context)
-    return evaluateLogicalExpression(node.operator, left, node.right)
+    return yield* evaluateLogicalExpression(node.operator, left, node.right, context)
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {
