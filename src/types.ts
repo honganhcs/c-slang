@@ -65,7 +65,7 @@ export enum Chapter {
 }
 
 export enum Variant {
-  DEFAULT = 'calc'
+  DEFAULT = 'c'
 }
 
 export interface Language {
@@ -260,7 +260,7 @@ export type TSAllowedTypes = 'any' | 'void'
 
 export const disallowedTypes = ['bigint', 'never', 'object', 'symbol', 'unknown'] as const
 
-export type TSDisallowedTypes = typeof disallowedTypes[number]
+export type TSDisallowedTypes = (typeof disallowedTypes)[number]
 
 // All types recognised by type parser as basic types
 export type TSBasicType = PrimitiveType | TSAllowedTypes | TSDisallowedTypes
