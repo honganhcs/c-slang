@@ -13,20 +13,25 @@ import {
   AssignmentExpressionContext,
   CastExpressionContext,
   ConditionalExpressionContext,
+  ConstantExpressionContext,
   CParser,
   EqualityExpressionContext,
   ExpressionContext,
   LogicalAndExpressionContext,
   LogicalOrExpressionContext,
   MultiplicativeExpressionContext,
+  PostfixExpressionContext,
+  PrimaryExpressionContext,
   ProgramContext,
   ProgramItemContext,
   RelationalExpressionContext,
-  StatementContext
+  StatementContext,
+  UnaryExpressionContext
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
 import { stripIndent } from '../utils/formatters'
+import { unaryOpMap } from '../utils/operators'
 
 export class DisallowedConstructError implements SourceError {
   public type = ErrorType.SYNTAX
@@ -247,6 +252,10 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
     return this.visitConditionalExpression(ctx.conditionalExpression()!)
   }
 
+  visitConstantExpression(ctx: ConstantExpressionContext): es.Expression {
+    return this.visitConditionalExpression(ctx.conditionalExpression())
+  }
+
   visitConditionalExpression(ctx: ConditionalExpressionContext): es.Expression {
     if (ctx.conditionalExpression()) {
       return {
@@ -345,11 +354,77 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
   }
 
   visitCastExpression(ctx: CastExpressionContext): es.Expression {
-    return {
-      type: 'Literal',
-      value: parseInt(ctx.text),
-      raw: ctx.text,
-      loc: contextToLocation(ctx)
+    // TODO: add support for type casting
+    return this.visitUnaryExpression(ctx.unaryExpression()!)
+  }
+
+  visitUnaryExpression(ctx: UnaryExpressionContext): es.Expression {
+    if (ctx.postfixExpression()) {
+      return this.visitPostfixExpression(ctx.postfixExpression()!)
+    } else if (ctx.unaryExpression()) {
+      const op = ctx.PlusPlus() ? '++' : '--'
+      return {
+        type: 'UpdateExpression',
+        operator: op,
+        argument: this.visitUnaryExpression(ctx.unaryExpression()!),
+        prefix: true
+      }
+    } else {
+      const symb = ctx.unaryOperator()!.text
+      const op = unaryOpMap[symb]
+      return {
+        type: 'UnaryExpression',
+        operator: op,
+        prefix: true,
+        argument: this.visitCastExpression(ctx.castExpression()!)
+      }
+    }
+  }
+
+  visitPostfixExpression(ctx: PostfixExpressionContext): es.Expression {
+    // TODO: add support for other cases
+    if (ctx.primaryExpression()) {
+      return this.visitPrimaryExpression(ctx.primaryExpression()!)
+    } else {
+      const op = ctx.PlusPlus() ? '++' : '--'
+      return {
+        type: 'UpdateExpression',
+        operator: op,
+        argument: this.visitPostfixExpression(ctx.postfixExpression()!),
+        prefix: false
+      }
+    }
+  }
+
+  visitPrimaryExpression(ctx: PrimaryExpressionContext): es.Expression {
+    if (ctx.expression()) {
+      return this.visitExpression(ctx.expression()!)
+    } else if (ctx.Identifier()) {
+      return {
+        type: 'Identifier',
+        name: ctx.text
+      }
+    } else if (ctx.Constant()) {
+      const num: number = parseFloat(ctx.text)
+      if (!isNaN(num)) {
+        return {
+          type: 'Literal',
+          value: num,
+          raw: ctx.text
+        }
+      } else {
+        return {
+          type: 'Literal',
+          value: ctx.text,
+          raw: undefined
+        }
+      }
+    } else {
+      return {
+        type: 'Literal',
+        value: ctx.text,
+        raw: ctx.text
+      }
     }
   }
 
