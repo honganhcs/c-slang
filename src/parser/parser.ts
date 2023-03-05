@@ -129,10 +129,10 @@ function contextToLocation(ctx: ParserRuleContext): es.SourceLocation {
 class ProgramGenerator implements CVisitor<es.Program> {
   visitProgram(ctx: ProgramContext): es.Program {
     const items = ctx.programItem()
-    const programBody: (es.Statement | es.Directive | es.ModuleDeclaration)[] = []
+    let programBody: (es.Statement | es.Directive | es.ModuleDeclaration)[] = []
 
     for (let i = 0; i < items.length; i++) {
-      programBody.concat(this.visitProgramItem(items[i]).body)
+      programBody = programBody.concat(this.visitProgramItem(items[i]).body)
     }
     return {
       type: 'Program',
@@ -315,9 +315,7 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
   }
 
   visitAdditiveExpression(ctx: AdditiveExpressionContext): es.Expression {
-    if (!ctx.additiveExpression()) {
-      return this.visit(ctx.multiplicativeExpression())
-    } else {
+    if (ctx.additiveExpression()) {
       const op = ctx.Plus() ? '+' : '-'
       return {
         type: 'BinaryExpression',
@@ -326,13 +324,13 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
         right: this.visit(ctx.multiplicativeExpression()),
         loc: contextToLocation(ctx)
       }
+    } else {
+      return this.visit(ctx.multiplicativeExpression())
     }
   }
 
   visitMultiplicativeExpression(ctx: MultiplicativeExpressionContext): es.Expression {
-    if (!ctx.multiplicativeExpression()) {
-      return this.visit(ctx.castExpression())
-    } else {
+    if (ctx.multiplicativeExpression()) {
       const op = ctx.Star() ? '*' : ctx.Mod() ? '%' : '/'
       return {
         type: 'BinaryExpression',
@@ -341,6 +339,8 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
         right: this.visit(ctx.castExpression()),
         loc: contextToLocation(ctx)
       }
+    } else {
+      return this.visit(ctx.castExpression())
     }
   }
 
