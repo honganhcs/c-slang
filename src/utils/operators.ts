@@ -149,7 +149,7 @@ export function unaryOp(operator: UnaryOperator, argument: any, line: number, co
 }
 
 const toNumber = (value: number | boolean): number =>
-  (typeof value === 'number') ? value : (value ? 1 : 0)
+  typeof value === 'number' ? value : value ? 1 : 0
 
 const unaryMicrocode = {
   // TODO: handle & and *
