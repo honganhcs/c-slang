@@ -8,12 +8,12 @@ import {
   InvalidNumberOfArguments
 } from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
+import { actualValue } from '../interpreter/interpreter'
 import { Thunk } from '../types'
 import { locationDummyNode } from './astCreator'
 import * as create from './astCreator'
 import { makeWrapper } from './makeWrapper'
 import * as rttc from './rttc'
-import { actualValue } from '../interpreter/interpreter'
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
@@ -196,7 +196,7 @@ const binopMircrocode = {
 
 export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
   const result = binopMircrocode[operator](left, right)
-  return toNumber(result)   
+  return toNumber(result)
 }
 
 const logicalopMicrocode = {
@@ -205,10 +205,15 @@ const logicalopMicrocode = {
   },
   '&&': function* (l: any, r: any, c: any) {
     return toBoolean(l) && toBoolean(yield* actualValue(r, c))
-  },
+  }
 }
 
-export function* evaluateLogicalExpression(operator: LogicalOperator, left: any, right: any, context: any) {
+export function* evaluateLogicalExpression(
+  operator: LogicalOperator,
+  left: any,
+  right: any,
+  context: any
+) {
   const result = logicalopMicrocode[operator](left, right, context)
   return toNumber(result)
 }
