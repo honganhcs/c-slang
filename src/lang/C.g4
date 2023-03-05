@@ -239,12 +239,7 @@ jumpStatement
     ;
 
 functionDefinition
-    :   typeSpecifier declarator declarationList? compoundStatement
-    ;
-
-declarationList
-    :   declaration
-    |   declarationList declaration
+    :   typeSpecifier declarator compoundStatement
     ;
 
 programItem
