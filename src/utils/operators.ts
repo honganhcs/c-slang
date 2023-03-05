@@ -1,4 +1,4 @@
-import { BinaryOperator, UnaryOperator } from 'estree'
+import { BinaryOperator, LogicalOperator, UnaryOperator } from 'estree'
 
 import { LazyBuiltIn } from '../createContext'
 import {
@@ -8,6 +8,7 @@ import {
   InvalidNumberOfArguments
 } from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
+import { actualValue } from '../interpreter/interpreter'
 import { Thunk } from '../types'
 import { locationDummyNode } from './astCreator'
 import * as create from './astCreator'
@@ -147,16 +148,20 @@ export function unaryOp(operator: UnaryOperator, argument: any, line: number, co
   }
 }
 
+const toNumber = (value: number | boolean): number =>
+  typeof value === 'number' ? value : value ? 1 : 0
+
+const unaryMicrocode = {
+  // TODO: handle & and *
+  '&': (v: any) => v,
+  '*': (v: any) => v,
+  '+': (v: any) => +v,
+  '-': (v: any) => -v,
+  '!': (v: any) => !v
+}
+
 export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
-  if (operator === '!') {
-    return !value
-  } else if (operator === '-') {
-    return -value
-  } else if (operator === 'typeof') {
-    return typeof value
-  } else {
-    return +value
-  }
+  return unaryMicrocode[operator](value)
 }
 
 export function binaryOp(
@@ -181,33 +186,44 @@ export function binaryOp(
   }
 }
 
+const binopMircrocode = {
+  '+': (l: any, r: any) => l + r,
+  '-': (l: any, r: any) => l - r,
+  '*': (l: any, r: any) => l * r,
+  '/': (l: any, r: any) => l / r,
+  '%': (l: any, r: any) => l % r,
+  '==': (l: any, r: any) => l === r,
+  '!=': (l: any, r: any) => l !== r,
+  '<=': (l: any, r: any) => l <= r,
+  '<': (l: any, r: any) => l < r,
+  '>': (l: any, r: any) => l > r,
+  '>=': (l: any, r: any) => l >= r
+}
+
 export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
-  switch (operator) {
-    case '+':
-      return left + right
-    case '-':
-      return left - right
-    case '*':
-      return left * right
-    case '/':
-      return left / right
-    case '%':
-      return left % right
-    case '===':
-      return left === right
-    case '!==':
-      return left !== right
-    case '<=':
-      return left <= right
-    case '<':
-      return left < right
-    case '>':
-      return left > right
-    case '>=':
-      return left >= right
-    default:
-      return undefined
+  const fLeft = toNumber(left)
+  const fRight = toNumber(right)
+  const result = binopMircrocode[operator](fLeft, fRight)
+  return toNumber(result)
+}
+
+const logicalopMicrocode = {
+  '||': function* (l: any, r: any, c: any) {
+    return l || (yield* actualValue(r, c))
+  },
+  '&&': function* (l: any, r: any, c: any) {
+    return l && (yield* actualValue(r, c))
   }
+}
+
+export function* evaluateLogicalExpression(
+  operator: LogicalOperator,
+  left: any,
+  right: any,
+  context: any
+) {
+  const result = yield* logicalopMicrocode[operator](left, right, context)
+  return toNumber(result)
 }
 
 export const setProp = (obj: any, prop: any, value: any, line: number, column: number) => {
