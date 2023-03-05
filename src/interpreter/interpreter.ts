@@ -10,7 +10,11 @@ import {
   evaluateUnaryExpression
 } from '../utils/operators'
 import * as rttc from '../utils/rttc'
-import { evaluateDoWhileStatement, evaluateIfStatement, evaluateWhileStatement } from '../utils/statements'
+import {
+  evaluateDoWhileStatement,
+  evaluateIfStatement,
+  evaluateWhileStatement
+} from '../utils/statements'
 
 class Thunk {
   public value: Value
