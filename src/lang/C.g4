@@ -97,16 +97,7 @@ constantExpression
     ;
 
 declaration
-    :   declarationSpecifiers initDeclaratorList ';'
-    ;
-
-declarationSpecifiers
-    :   declarationSpecifier+
-    ;
-
-declarationSpecifier
-    :   typeSpecifier
-    |   typeQualifier
+    :   typeSpecifier initDeclaratorList ';'
     ;
 
 initDeclaratorList
@@ -122,20 +113,8 @@ initDeclarator
 typeSpecifier
     :   'void'
     |   'char'
-    |   'short'
     |   'int'
-    |   'long'
     |   'float'
-    |   'double'
-    ;
-
-specifierQualifierList
-    :   typeSpecifier specifierQualifierList?
-    |   typeQualifier specifierQualifierList?
-    ;
-
-typeQualifier
-    :   'const'
     ;
 
 declarator
@@ -151,13 +130,8 @@ directDeclarator
     ;
 
 pointer
-    :   '*' typeQualifierList?
-    |   '*' typeQualifierList? pointer
-    ;
-
-typeQualifierList
-    :   typeQualifier
-    |   typeQualifierList typeQualifier
+    :   '*' 
+    |   '*' pointer
     ;
 
 parameterTypeList
@@ -170,9 +144,9 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers
-    |   declarationSpecifiers declarator
-    |   declarationSpecifiers abstractDeclarator
+    :   typeSpecifier
+    |   typeSpecifier declarator
+    |   typeSpecifier abstractDeclarator
     ;
 
 identifierList
@@ -181,7 +155,7 @@ identifierList
     ;
 
 typeName
-    :   specifierQualifierList abstractDeclarator?
+    :   typeSpecifier abstractDeclarator?
     ;
 
 abstractDeclarator
@@ -249,8 +223,8 @@ forCondition
 	;
 
 forDeclaration
-    :   declarationSpecifiers initDeclaratorList
-	| 	declarationSpecifiers
+    :   typeSpecifier initDeclaratorList
+	| 	typeSpecifier
     ;
 
 forExpression
@@ -265,7 +239,7 @@ jumpStatement
     ;
 
 functionDefinition
-    :   declarationSpecifiers? declarator declarationList? compoundStatement
+    :   typeSpecifier declarator declarationList? compoundStatement
     ;
 
 declarationList

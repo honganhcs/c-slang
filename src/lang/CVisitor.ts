@@ -20,17 +20,12 @@ import { AssignmentOperatorContext } from './CParser'
 import { ExpressionContext } from './CParser'
 import { ConstantExpressionContext } from './CParser'
 import { DeclarationContext } from './CParser'
-import { DeclarationSpecifiersContext } from './CParser'
-import { DeclarationSpecifierContext } from './CParser'
 import { InitDeclaratorListContext } from './CParser'
 import { InitDeclaratorContext } from './CParser'
 import { TypeSpecifierContext } from './CParser'
-import { SpecifierQualifierListContext } from './CParser'
-import { TypeQualifierContext } from './CParser'
 import { DeclaratorContext } from './CParser'
 import { DirectDeclaratorContext } from './CParser'
 import { PointerContext } from './CParser'
-import { TypeQualifierListContext } from './CParser'
 import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
 import { ParameterDeclarationContext } from './CParser'
@@ -191,20 +186,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
   visitDeclaration?: (ctx: DeclarationContext) => Result
 
   /**
-   * Visit a parse tree produced by `CParser.declarationSpecifiers`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.declarationSpecifier`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitDeclarationSpecifier?: (ctx: DeclarationSpecifierContext) => Result
-
-  /**
    * Visit a parse tree produced by `CParser.initDeclaratorList`.
    * @param ctx the parse tree
    * @return the visitor result
@@ -226,20 +207,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
   visitTypeSpecifier?: (ctx: TypeSpecifierContext) => Result
 
   /**
-   * Visit a parse tree produced by `CParser.specifierQualifierList`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitSpecifierQualifierList?: (ctx: SpecifierQualifierListContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.typeQualifier`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitTypeQualifier?: (ctx: TypeQualifierContext) => Result
-
-  /**
    * Visit a parse tree produced by `CParser.declarator`.
    * @param ctx the parse tree
    * @return the visitor result
@@ -259,13 +226,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitPointer?: (ctx: PointerContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.typeQualifierList`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitTypeQualifierList?: (ctx: TypeQualifierListContext) => Result
 
   /**
    * Visit a parse tree produced by `CParser.parameterTypeList`.

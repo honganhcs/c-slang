@@ -20,17 +20,12 @@ import { AssignmentOperatorContext } from './CParser'
 import { ExpressionContext } from './CParser'
 import { ConstantExpressionContext } from './CParser'
 import { DeclarationContext } from './CParser'
-import { DeclarationSpecifiersContext } from './CParser'
-import { DeclarationSpecifierContext } from './CParser'
 import { InitDeclaratorListContext } from './CParser'
 import { InitDeclaratorContext } from './CParser'
 import { TypeSpecifierContext } from './CParser'
-import { SpecifierQualifierListContext } from './CParser'
-import { TypeQualifierContext } from './CParser'
 import { DeclaratorContext } from './CParser'
 import { DirectDeclaratorContext } from './CParser'
 import { PointerContext } from './CParser'
-import { TypeQualifierListContext } from './CParser'
 import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
 import { ParameterDeclarationContext } from './CParser'
@@ -260,28 +255,6 @@ export interface CListener extends ParseTreeListener {
   exitDeclaration?: (ctx: DeclarationContext) => void
 
   /**
-   * Enter a parse tree produced by `CParser.declarationSpecifiers`.
-   * @param ctx the parse tree
-   */
-  enterDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.declarationSpecifiers`.
-   * @param ctx the parse tree
-   */
-  exitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => void
-
-  /**
-   * Enter a parse tree produced by `CParser.declarationSpecifier`.
-   * @param ctx the parse tree
-   */
-  enterDeclarationSpecifier?: (ctx: DeclarationSpecifierContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.declarationSpecifier`.
-   * @param ctx the parse tree
-   */
-  exitDeclarationSpecifier?: (ctx: DeclarationSpecifierContext) => void
-
-  /**
    * Enter a parse tree produced by `CParser.initDeclaratorList`.
    * @param ctx the parse tree
    */
@@ -315,28 +288,6 @@ export interface CListener extends ParseTreeListener {
   exitTypeSpecifier?: (ctx: TypeSpecifierContext) => void
 
   /**
-   * Enter a parse tree produced by `CParser.specifierQualifierList`.
-   * @param ctx the parse tree
-   */
-  enterSpecifierQualifierList?: (ctx: SpecifierQualifierListContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.specifierQualifierList`.
-   * @param ctx the parse tree
-   */
-  exitSpecifierQualifierList?: (ctx: SpecifierQualifierListContext) => void
-
-  /**
-   * Enter a parse tree produced by `CParser.typeQualifier`.
-   * @param ctx the parse tree
-   */
-  enterTypeQualifier?: (ctx: TypeQualifierContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.typeQualifier`.
-   * @param ctx the parse tree
-   */
-  exitTypeQualifier?: (ctx: TypeQualifierContext) => void
-
-  /**
    * Enter a parse tree produced by `CParser.declarator`.
    * @param ctx the parse tree
    */
@@ -368,17 +319,6 @@ export interface CListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitPointer?: (ctx: PointerContext) => void
-
-  /**
-   * Enter a parse tree produced by `CParser.typeQualifierList`.
-   * @param ctx the parse tree
-   */
-  enterTypeQualifierList?: (ctx: TypeQualifierListContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.typeQualifierList`.
-   * @param ctx the parse tree
-   */
-  exitTypeQualifierList?: (ctx: TypeQualifierListContext) => void
 
   /**
    * Enter a parse tree produced by `CParser.parameterTypeList`.
