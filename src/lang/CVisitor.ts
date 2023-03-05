@@ -21,7 +21,6 @@ import { ExpressionContext } from './CParser'
 import { ConstantExpressionContext } from './CParser'
 import { DeclarationContext } from './CParser'
 import { DeclarationSpecifiersContext } from './CParser'
-import { DeclarationSpecifiers2Context } from './CParser'
 import { DeclarationSpecifierContext } from './CParser'
 import { InitDeclaratorListContext } from './CParser'
 import { InitDeclaratorContext } from './CParser'
@@ -197,13 +196,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.declarationSpecifiers2`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitDeclarationSpecifiers2?: (ctx: DeclarationSpecifiers2Context) => Result
 
   /**
    * Visit a parse tree produced by `CParser.declarationSpecifier`.

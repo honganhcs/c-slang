@@ -104,10 +104,6 @@ declarationSpecifiers
     :   declarationSpecifier+
     ;
 
-declarationSpecifiers2
-    :   declarationSpecifier+
-    ;
-
 declarationSpecifier
     :   typeSpecifier
     |   typeQualifier
@@ -174,8 +170,9 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers declarator
-    |   declarationSpecifiers2 abstractDeclarator?
+    :   declarationSpecifiers
+    |   declarationSpecifiers declarator
+    |   declarationSpecifiers abstractDeclarator
     ;
 
 identifierList

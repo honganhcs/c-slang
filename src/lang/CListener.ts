@@ -21,7 +21,6 @@ import { ExpressionContext } from './CParser'
 import { ConstantExpressionContext } from './CParser'
 import { DeclarationContext } from './CParser'
 import { DeclarationSpecifiersContext } from './CParser'
-import { DeclarationSpecifiers2Context } from './CParser'
 import { DeclarationSpecifierContext } from './CParser'
 import { InitDeclaratorListContext } from './CParser'
 import { InitDeclaratorContext } from './CParser'
@@ -270,17 +269,6 @@ export interface CListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => void
-
-  /**
-   * Enter a parse tree produced by `CParser.declarationSpecifiers2`.
-   * @param ctx the parse tree
-   */
-  enterDeclarationSpecifiers2?: (ctx: DeclarationSpecifiers2Context) => void
-  /**
-   * Exit a parse tree produced by `CParser.declarationSpecifiers2`.
-   * @param ctx the parse tree
-   */
-  exitDeclarationSpecifiers2?: (ctx: DeclarationSpecifiers2Context) => void
 
   /**
    * Enter a parse tree produced by `CParser.declarationSpecifier`.
