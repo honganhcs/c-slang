@@ -139,12 +139,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ConditionalExpression: function* (node: es.ConditionalExpression, context: Context) {
     const test = yield* actualValue(node.test, context)
-    return evaluateConditionalExpression(test, node.alternate, node.consequent, context)
+    return evaluateConditionalExpression(test, node.alternate, node.consequent)
   },
 
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
     const left = yield* actualValue(node.left, context)
-    return evaluateLogicalExpression(node.operator, left, node.right, context)
+    return evaluateLogicalExpression(node.operator, left, node.right)
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {
