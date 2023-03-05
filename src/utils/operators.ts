@@ -203,7 +203,8 @@ const binopMircrocode = {
 export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
   const fLeft = toNumber(left)
   const fRight = toNumber(right)
-  return binopMircrocode[operator](fLeft, fRight)
+  const result = binopMircrocode[operator](fLeft, fRight)
+  return toNumber(result)
 }
 
 const logicalopMicrocode = {
