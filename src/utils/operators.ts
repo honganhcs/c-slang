@@ -150,8 +150,6 @@ export function unaryOp(operator: UnaryOperator, argument: any, line: number, co
 
 const toNumber = (value: Number | Boolean): Number => (value ? 1 : 0)
 
-const toBoolean = (value: Boolean | Number): Boolean => value !== 0
-
 const unaryMicrocode = {
   // TODO: handle & and *
   '&': (v: any) => v,
@@ -162,8 +160,7 @@ const unaryMicrocode = {
 }
 
 export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
-  const result = unaryMicrocode[operator](value)
-  return toNumber(result)
+  return unaryMicrocode[operator](value)
 }
 
 export function binaryOp(
@@ -203,16 +200,17 @@ const binopMircrocode = {
 }
 
 export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
-  const result = binopMircrocode[operator](left, right)
-  return toNumber(result)
+  const fLeft = toNumber(left)
+  const fRight = toNumber(right)
+  return binopMircrocode[operator](fLeft, fRight)
 }
 
 const logicalopMicrocode = {
   '||': function* (l: any, r: any, c: any) {
-    return toBoolean(l) || toBoolean(yield* actualValue(r, c))
+    return l || (yield* actualValue(r, c))
   },
   '&&': function* (l: any, r: any, c: any) {
-    return toBoolean(l) && toBoolean(yield* actualValue(r, c))
+    return l && (yield* actualValue(r, c))
   }
 }
 
@@ -222,7 +220,7 @@ export function* evaluateLogicalExpression(
   right: any,
   context: any
 ) {
-  const result = logicalopMicrocode[operator](left, right, context)
+  const result = yield* logicalopMicrocode[operator](left, right, context)
   return toNumber(result)
 }
 
