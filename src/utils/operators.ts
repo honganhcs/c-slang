@@ -125,13 +125,15 @@ export function boolOrErr(candidate: any, line: number, column: number) {
   }
 }
 
-export type UnaryOp = UnaryOperator | "&" | "*"
+export type UnaryOp = UnaryOperator | '&' | '*'
 
 export type BinaryOp = BinaryOperator
 
 export type LogicalOp = LogicalOperator
 
-const toNumber = (val: Boolean) => val ? 0 : 1
+const toNumber = (val: Boolean) => (val ? 0 : 1)
+
+const toBoolean = (val: Number) => val !== 0
 
 const unaryop_mircocode = {
   // TODO: handle & and *
@@ -142,12 +144,7 @@ const unaryop_mircocode = {
   '!': (v: any) => !v
 }
 
-export function unaryOp(
-  operator: UnaryOp,
-  argument: any,
-  line: number,
-  column: number
-) {
+export function unaryOp(operator: UnaryOp, argument: any, line: number, column: number) {
   argument = forceIt(argument)
   const error = rttc.checkUnaryExpression(
     create.locationDummyNode(line, column),
@@ -179,13 +176,7 @@ const binop_mircrocode = {
   '>=': (l: any, r: any) => l >= r
 }
 
-export function binaryOp(
-  operator: BinaryOp,
-  left: any,
-  right: any,
-  line: number,
-  column: number
-) {
+export function binaryOp(operator: BinaryOp, left: any, right: any, line: number, column: number) {
   left = forceIt(left)
   right = forceIt(right)
   const error = rttc.checkBinaryExpression(
@@ -205,8 +196,12 @@ export function evaluateBinaryExpression(operator: BinaryOp, left: any, right: a
   return toNumber(binop_mircrocode[operator](left, right))
 }
 
+export function evaluateConditionalExpression(test: any, alternate: any, consequent: any) {
+  return toNumber(toBoolean(test) ? alternate() : consequent())
+}
+
 const logicalop_microcode = {
-  '||': (l: any, r: any) => l() ? true : r(),
+  '||': (l: any, r: any) => (l() ? true : r()),
   '&&': (l: any, r: any) => l() && r()
 }
 
@@ -232,7 +227,7 @@ export function logicalOp(
   }
 }
 
-export function evaluateLogialExpression(operator: LogicalOp, left: any, right: any) {  
+export function evaluateLogialExpression(operator: LogicalOp, left: any, right: any) {
   return toNumber(logicalop_microcode[operator](left, right))
 }
 

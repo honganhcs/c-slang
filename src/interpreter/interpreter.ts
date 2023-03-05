@@ -3,7 +3,12 @@ import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Context, Environment, Value } from '../types'
-import { evaluateBinaryExpression, evaluateLogialExpression, evaluateUnaryExpression } from '../utils/operators'
+import {
+  evaluateBinaryExpression,
+  evaluateConditionalExpression,
+  evaluateLogialExpression,
+  evaluateUnaryExpression
+} from '../utils/operators'
 import * as rttc from '../utils/rttc'
 
 class Thunk {
@@ -123,33 +128,25 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
     const value = yield* actualValue(node.argument, context)
     const error = rttc.checkUnaryExpression(node, node.operator, value)
-    if (error) {
-      return handleRuntimeError(context, error)
-    }
     return evaluateUnaryExpression(node.operator, value)
   },
 
   BinaryExpression: function* (node: es.BinaryExpression, context: Context) {
     const left = yield* actualValue(node.left, context)
     const right = yield* actualValue(node.right, context)
-    const error = rttc.checkBinaryExpression(node, node.operator, left, right)
-    if (error) {
-      return handleRuntimeError(context, error)
-    }
     return evaluateBinaryExpression(node.operator, left, right)
   },
 
   ConditionalExpression: function* (node: es.ConditionalExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const test = yield* actualValue(node.test, context)
+    const alternate = () => yield* actualValue(node.alternate, context)
+    const consequent = () => yield* actualValue(node.consequent, context)
+    return evaluateConditionalExpression(test, alternate, consequent)
   },
 
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
     const left = () => yield* actualValue(node.left, context)
     const right = () => yield* actualValue(node.right, context)
-    const error = rttc.checkLogicalExpression(node, node.operator, left, right)
-    if (error) {
-      return handleRuntimeError(context, error)
-    }
     return evaluateLogialExpression(node.operator, left, right)
   },
 
