@@ -6,7 +6,7 @@ import { Context, Environment, Value } from '../types'
 import {
   evaluateBinaryExpression,
   evaluateConditionalExpression,
-  evaluateLogialExpression,
+  evaluateLogicalExpression,
   evaluateUnaryExpression
 } from '../utils/operators'
 import * as rttc from '../utils/rttc'
@@ -139,15 +139,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ConditionalExpression: function* (node: es.ConditionalExpression, context: Context) {
     const test = yield* actualValue(node.test, context)
-    const alternate = () => yield* actualValue(node.alternate, context)
-    const consequent = () => yield* actualValue(node.consequent, context)
-    return evaluateConditionalExpression(test, alternate, consequent)
+    return evaluateConditionalExpression(test, node.alternate, node.consequent, context)
   },
 
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
-    const left = () => yield* actualValue(node.left, context)
-    const right = () => yield* actualValue(node.right, context)
-    return evaluateLogialExpression(node.operator, left, right)
+    const left = yield* actualValue(node.left, context)
+    return evaluateLogicalExpression(node.operator, left, node.right, context)
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {

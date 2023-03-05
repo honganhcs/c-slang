@@ -125,26 +125,7 @@ export function boolOrErr(candidate: any, line: number, column: number) {
   }
 }
 
-export type UnaryOp = UnaryOperator | '&' | '*'
-
-export type BinaryOp = BinaryOperator
-
-export type LogicalOp = LogicalOperator
-
-const toNumber = (val: Boolean) => (val ? 0 : 1)
-
-const toBoolean = (val: Number) => val !== 0
-
-const unaryop_mircocode = {
-  // TODO: handle & and *
-  '&': (v: any) => v,
-  '*': (v: any) => v,
-  '+': (v: any) => +v,
-  '-': (v: any) => -v,
-  '!': (v: any) => !v
-}
-
-export function unaryOp(operator: UnaryOp, argument: any, line: number, column: number) {
+export function unaryOp(operator: UnaryOperator, argument: any, line: number, column: number) {
   argument = forceIt(argument)
   const error = rttc.checkUnaryExpression(
     create.locationDummyNode(line, column),
@@ -158,25 +139,25 @@ export function unaryOp(operator: UnaryOp, argument: any, line: number, column: 
   }
 }
 
-export function evaluateUnaryExpression(operator: UnaryOp, value: any) {
-  return toNumber(unaryop_mircocode[operator](value))
+export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
+  if (operator === '!') {
+    return !value
+  } else if (operator === '-') {
+    return -value
+  } else if (operator === 'typeof') {
+    return typeof value
+  } else {
+    return +value
+  }
 }
 
-const binop_mircrocode = {
-  '+': (l: any, r: any) => l + r,
-  '-': (l: any, r: any) => l - r,
-  '*': (l: any, r: any) => l * r,
-  '/': (l: any, r: any) => l / r,
-  '%': (l: any, r: any) => l % r,
-  '==': (l: any, r: any) => l === r,
-  '!=': (l: any, r: any) => l !== r,
-  '<=': (l: any, r: any) => l <= r,
-  '<': (l: any, r: any) => l < r,
-  '>': (l: any, r: any) => l > r,
-  '>=': (l: any, r: any) => l >= r
-}
-
-export function binaryOp(operator: BinaryOp, left: any, right: any, line: number, column: number) {
+export function binaryOp(
+  operator: BinaryOperator,
+  left: any,
+  right: any,
+  line: number,
+  column: number
+) {
   left = forceIt(left)
   right = forceIt(right)
   const error = rttc.checkBinaryExpression(
@@ -192,43 +173,41 @@ export function binaryOp(operator: BinaryOp, left: any, right: any, line: number
   }
 }
 
-export function evaluateBinaryExpression(operator: BinaryOp, left: any, right: any) {
-  return toNumber(binop_mircrocode[operator](left, right))
-}
-
-export function evaluateConditionalExpression(test: any, alternate: any, consequent: any) {
-  return toNumber(toBoolean(test) ? alternate() : consequent())
-}
-
-const logicalop_microcode = {
-  '||': (l: any, r: any) => (l() ? true : r()),
-  '&&': (l: any, r: any) => l() && r()
-}
-
-export function logicalOp(
-  operator: LogicalOp,
-  left: any,
-  right: any,
-  line: number,
-  column: number
-) {
-  left = forceIt(left)
-  right = forceIt(right)
-  const error = rttc.checkLogicalExpression(
-    create.locationDummyNode(line, column),
-    operator,
-    left,
-    right
-  )
-  if (error === undefined) {
-    return evaluateLogialExpression(operator, left, right)
-  } else {
-    throw error
+export function evaluateBinaryExpression(operator: BinaryOperator, left: any, right: any) {
+  switch (operator) {
+    case '+':
+      return left + right
+    case '-':
+      return left - right
+    case '*':
+      return left * right
+    case '/':
+      return left / right
+    case '%':
+      return left % right
+    case '===':
+      return left === right
+    case '!==':
+      return left !== right
+    case '<=':
+      return left <= right
+    case '<':
+      return left < right
+    case '>':
+      return left > right
+    case '>=':
+      return left >= right
+    default:
+      return undefined
   }
 }
 
-export function evaluateLogialExpression(operator: LogicalOp, left: any, right: any) {
-  return toNumber(logicalop_microcode[operator](left, right))
+export function evaluateConditionalExpression(test: any, left: any, right: any) {
+  return undefined
+}
+
+export function evaluateLogicalExpression(operator: LogicalOperator, left: any, right: any) {
+  return undefined
 }
 
 export const setProp = (obj: any, prop: any, value: any, line: number, column: number) => {

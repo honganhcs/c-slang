@@ -2,7 +2,6 @@ import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { ErrorSeverity, ErrorType, Value } from '../types'
-import { BinaryOp, LogicalOp, UnaryOp } from './operators'
 
 const LHS = ' on left hand side of operation'
 const RHS = ' on right hand side of operation'
@@ -45,34 +44,23 @@ const isString = (v: Value) => typeOf(v) === 'string'
 const isBool = (v: Value) => typeOf(v) === 'boolean'
 const isObject = (v: Value) => typeOf(v) === 'object'
 const isArray = (v: Value) => typeOf(v) === 'array'
-const isPointer = (v: Value) => true // TODO: handle 'pointer'
 
-export const checkUnaryExpression = (node: es.Node, operator: UnaryOp, value: Value) => {
-  // TODO: handle
-  return undefined
-  /*
+export const checkUnaryExpression = (node: es.Node, operator: es.UnaryOperator, value: Value) => {
   if ((operator === '+' || operator === '-') && !isNumber(value)) {
     return new TypeError(node, '', 'number', typeOf(value))
   } else if (operator === '!' && !isBool(value)) {
     return new TypeError(node, '', 'boolean', typeOf(value))
-  } else if (operator === '&' && !isObject) {
-    return new TypeError(node, '', 'object', typeOf(value))
-  } else if (operator === '*' && !isPointer) {
-    return new TypeError(node, '', 'pointer', typeOf(value))
   } else {
     return undefined
   }
-  */
 }
 
 export const checkBinaryExpression = (
   node: es.Node,
-  operator: BinaryOp,
+  operator: es.BinaryOperator,
   left: Value,
   right: Value
 ) => {
-  return undefined
-  /*
   switch (operator) {
     case '-':
     case '*':
@@ -90,8 +78,8 @@ export const checkBinaryExpression = (
     case '<=':
     case '>':
     case '>=':
-    case '!=':
-    case '==':
+    case '!==':
+    case '===':
       if (isNumber(left)) {
         return isNumber(right) ? undefined : new TypeError(node, RHS, 'number', typeOf(right))
       } else if (isString(left)) {
@@ -102,31 +90,6 @@ export const checkBinaryExpression = (
     default:
       return
   }
-  */
-}
-
-export const checkLogicalExpression = (
-  node: es.Node,
-  operator: LogicalOp,
-  left: Value,
-  right: Value
-) => {
-  return undefined
-  /*
-  switch (operator) {
-    case '||':
-    case '&&':
-      if (!isBool(left) && !isNumber(left)) {
-        return new TypeError(node, LHS, 'boolean or number', typeOf(left))
-      } else if (!isBool(right) && !isNumber(right)) {
-        return new TypeError(node, RHS, 'boolean or number', typeOf(right))
-      } else {
-        return
-      }
-    default:
-      return
-  }
-  */
 }
 
 export const checkIfStatement = (node: es.Node, test: Value) => {
