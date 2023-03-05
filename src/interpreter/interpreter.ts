@@ -10,7 +10,7 @@ import {
   evaluateUnaryExpression
 } from '../utils/operators'
 import * as rttc from '../utils/rttc'
-import { evaluateIfStatement, evaluateWhileStatement } from '../utils/statements'
+import { evaluateDoWhileStatement, evaluateIfStatement, evaluateWhileStatement } from '../utils/statements'
 
 class Thunk {
   public value: Value
@@ -188,6 +188,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
     const test = yield* actualValue(node.test, context)
     return yield* evaluateWhileStatement(test, node.body, context)
+  },
+  
+  DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
+    const first = yield* actualValue(node.body, context)
+    const test = yield* actualValue(node.test, context)
+    return yield* evaluateDoWhileStatement(test, node.body, context)
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {

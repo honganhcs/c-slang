@@ -7,3 +7,7 @@ export function* evaluateIfStatement(test: any, consequent: any, alternate: any,
 export function* evaluateWhileStatement(test: any, body: any, context: any) {
   return test ? yield* actualValue(body, context) : test
 }
+
+export function* evaluateDoWhileStatement(test: any, body: any, context: any) {
+  return evaluateWhileStatement(test, body, context)
+}
