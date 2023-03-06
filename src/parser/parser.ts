@@ -15,8 +15,13 @@ import {
   ConditionalExpressionContext,
   ConstantExpressionContext,
   CParser,
+  DeclarationContext,
+  DeclaratorContext,
+  DirectDeclaratorContext,
   EqualityExpressionContext,
   ExpressionContext,
+  InitDeclaratorContext,
+  InitDeclaratorListContext,
   LogicalAndExpressionContext,
   LogicalOrExpressionContext,
   MultiplicativeExpressionContext,
@@ -30,8 +35,9 @@ import {
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
+import { program } from '../utils/astCreator'
+import { typeMap, unaryOpMap } from '../utils/astMaps'
 import { stripIndent } from '../utils/formatters'
-import { unaryOpMap } from '../utils/operators'
 
 export class DisallowedConstructError implements SourceError {
   public type = ErrorType.SYNTAX
@@ -134,26 +140,22 @@ function contextToLocation(ctx: ParserRuleContext): es.SourceLocation {
 class ProgramGenerator implements CVisitor<es.Program> {
   visitProgram(ctx: ProgramContext): es.Program {
     const items = ctx.programItem()
-    let programBody: (es.Statement | es.Directive | es.ModuleDeclaration)[] = []
+    const programBody: es.Statement[] = []
 
     for (let i = 0; i < items.length; i++) {
-      programBody = programBody.concat(this.visitProgramItem(items[i]).body)
+      programBody.push(this.parseProgramItem(items[i]))
     }
-    return {
-      type: 'Program',
-      sourceType: 'script',
-      body: programBody
-    }
+    return program(programBody)
   }
 
-  visitProgramItem(ctx: ProgramItemContext): es.Program {
-    // TODO: add support for ModuleDeclaration
-    const generator = new StatementGenerator()
-    const stmt: es.Statement = ctx.statement()!.accept(generator)
-    return {
-      type: 'Program',
-      sourceType: 'script',
-      body: [stmt]
+  parseProgramItem(ctx: ProgramItemContext): es.Statement {
+    if (ctx.statement()) {
+      const generator = new StatementGenerator()
+      return ctx.statement()!.accept(generator)
+    } else {
+      // TODO: add support for FunctionDefinition
+      const generator = new DeclarationGenerator()
+      return ctx.declaration()!.accept(generator)
     }
   }
 
@@ -162,15 +164,7 @@ class ProgramGenerator implements CVisitor<es.Program> {
   }
 
   visitChildren(node: RuleNode): es.Program {
-    const programBody: (es.Statement | es.Directive | es.ModuleDeclaration)[] = []
-    for (let i = 0; i < node.childCount; i++) {
-      programBody.concat(node.getChild(i).accept(this).body)
-    }
-    return {
-      type: 'Program',
-      sourceType: 'script',
-      body: programBody
-    }
+    return node.getChild(0).accept(this)
   }
 
   visitTerminal(node: TerminalNode): es.Program {
@@ -225,6 +219,109 @@ class StatementGenerator implements CVisitor<es.Statement> {
   }
 
   visitErrorNode(node: ErrorNode): es.Statement {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine
+        },
+        end: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine + 1
+        }
+      },
+      `invalid syntax ${node.text}`
+    )
+  }
+}
+
+class DeclarationGenerator implements CVisitor<es.VariableDeclaration> {
+  visitDeclaration(ctx: DeclarationContext): es.VariableDeclaration {
+    const kind = ctx.typeSpecifier().text
+    const declarations: Array<es.VariableDeclarator> = []
+    const generator = new DeclaratorGenerator()
+    let initDeclaratorList: InitDeclaratorListContext | undefined = ctx.initDeclaratorList()
+    while (initDeclaratorList) {
+      declarations.push(initDeclaratorList.initDeclarator().accept(generator))
+      initDeclaratorList = initDeclaratorList.initDeclaratorList()
+    }
+    return {
+      type: 'VariableDeclaration',
+      declarations: declarations,
+      kind: typeMap[kind]
+    }
+  }
+
+  visit(tree: ParseTree): es.VariableDeclaration {
+    return tree.accept(this)
+  }
+
+  visitChildren(node: RuleNode): es.VariableDeclaration {
+    return node.getChild(0).accept(this)
+  }
+
+  visitTerminal(node: TerminalNode): es.VariableDeclaration {
+    return node.accept(this)
+  }
+
+  visitErrorNode(node: ErrorNode): es.VariableDeclaration {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine
+        },
+        end: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine + 1
+        }
+      },
+      `invalid syntax ${node.text}`
+    )
+  }
+}
+
+class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
+  visitInitDeclarator(ctx: InitDeclaratorContext): es.VariableDeclarator {
+    const decl = this.visitDeclarator(ctx.declarator())
+    if (ctx.initializer()) {
+      // TODO: add support for initializerList
+      const generator = new ExpressionGenerator()
+      const expr: es.Expression = ctx.initializer()!.assignmentExpression()!.accept(generator)
+      decl.init = expr
+    }
+    return decl
+  }
+
+  visitDeclarator(ctx: DeclaratorContext): es.VariableDeclarator {
+    // TODO: add support for pointer
+    return this.visitDirectDeclarator(ctx.directDeclarator())
+  }
+
+  visitDirectDeclarator(ctx: DirectDeclaratorContext): es.VariableDeclarator {
+    // TODO: add support for array, function declarations, recursive def
+    return {
+      type: 'VariableDeclarator',
+      id: {
+        type: 'Identifier',
+        name: ctx.Identifier()!.text
+      }
+    }
+  }
+
+  visit(tree: ParseTree): es.VariableDeclarator {
+    return tree.accept(this)
+  }
+
+  visitChildren(node: RuleNode): es.VariableDeclarator {
+    return node.getChild(0).accept(this)
+  }
+
+  visitTerminal(node: TerminalNode): es.VariableDeclarator {
+    return node.accept(this)
+  }
+
+  visitErrorNode(node: ErrorNode): es.VariableDeclarator {
     throw new FatalSyntaxError(
       {
         start: {

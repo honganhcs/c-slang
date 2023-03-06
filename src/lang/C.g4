@@ -97,20 +97,7 @@ constantExpression
     ;
 
 declaration
-    :   declarationSpecifiers initDeclaratorList ';'
-    ;
-
-declarationSpecifiers
-    :   declarationSpecifier+
-    ;
-
-declarationSpecifiers2
-    :   declarationSpecifier+
-    ;
-
-declarationSpecifier
-    :   typeSpecifier
-    |   typeQualifier
+    :   typeSpecifier initDeclaratorList ';'
     ;
 
 initDeclaratorList
@@ -126,20 +113,8 @@ initDeclarator
 typeSpecifier
     :   'void'
     |   'char'
-    |   'short'
     |   'int'
-    |   'long'
     |   'float'
-    |   'double'
-    ;
-
-specifierQualifierList
-    :   typeSpecifier specifierQualifierList?
-    |   typeQualifier specifierQualifierList?
-    ;
-
-typeQualifier
-    :   'const'
     ;
 
 declarator
@@ -151,17 +126,12 @@ directDeclarator
     |   '(' declarator ')'
     |   directDeclarator '[' constantExpression? ']'
     |   directDeclarator '(' parameterTypeList ')'
-    |   directDeclarator '(' identifierList? ')'
+    |   directDeclarator '(' identifierList? ')' // TODO: decide whether to remove
     ;
 
 pointer
-    :   '*' typeQualifierList?
-    |   '*' typeQualifierList? pointer
-    ;
-
-typeQualifierList
-    :   typeQualifier
-    |   typeQualifierList typeQualifier
+    :   '*' 
+    |   '*' pointer
     ;
 
 parameterTypeList
@@ -174,8 +144,9 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers declarator
-    |   declarationSpecifiers2 abstractDeclarator?
+    :   typeSpecifier
+    |   typeSpecifier declarator
+    |   typeSpecifier abstractDeclarator
     ;
 
 identifierList
@@ -184,7 +155,7 @@ identifierList
     ;
 
 typeName
-    :   specifierQualifierList abstractDeclarator?
+    :   typeSpecifier abstractDeclarator?
     ;
 
 abstractDeclarator
@@ -252,8 +223,8 @@ forCondition
 	;
 
 forDeclaration
-    :   declarationSpecifiers initDeclaratorList
-	| 	declarationSpecifiers
+    :   typeSpecifier initDeclaratorList
+	| 	typeSpecifier
     ;
 
 forExpression
@@ -268,12 +239,7 @@ jumpStatement
     ;
 
 functionDefinition
-    :   declarationSpecifiers? declarator declarationList? compoundStatement
-    ;
-
-declarationList
-    :   declaration
-    |   declarationList declaration
+    :   typeSpecifier declarator compoundStatement
     ;
 
 programItem

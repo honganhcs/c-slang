@@ -205,9 +205,9 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     return result
   },
 
-  Program: function* (node: es.BlockStatement, context: Context) {
-    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context)
-    return result
+  Program: function* (node: es.Program, context: Context) {
+    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context);
+    return result;
   }
 }
 // tslint:enable:object-literal-shorthand

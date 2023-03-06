@@ -126,14 +126,6 @@ export function boolOrErr(candidate: any, line: number, column: number) {
   }
 }
 
-export const unaryOpMap: { [key: string]: UnaryOperator } = {
-  '-': '-',
-  '+': '+',
-  '!': '!',
-  '*': 'void',
-  '&': 'delete'
-}
-
 export function unaryOp(operator: UnaryOperator, argument: any, line: number, column: number) {
   argument = forceIt(argument)
   const error = rttc.checkUnaryExpression(
