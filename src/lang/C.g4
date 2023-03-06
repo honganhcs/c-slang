@@ -126,7 +126,7 @@ directDeclarator
     |   '(' declarator ')'
     |   directDeclarator '[' constantExpression? ']'
     |   directDeclarator '(' parameterTypeList ')'
-    |   directDeclarator '(' identifierList? ')'
+    |   directDeclarator '(' identifierList? ')' // TODO: decide whether to remove
     ;
 
 pointer
