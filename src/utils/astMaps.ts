@@ -1,4 +1,4 @@
-import { UnaryOperator } from "estree";
+import { UnaryOperator } from 'estree'
 
 export const unaryOpMap: { [key: string]: UnaryOperator } = {
   '-': '-',
@@ -9,7 +9,7 @@ export const unaryOpMap: { [key: string]: UnaryOperator } = {
 }
 
 export const typeMap = {
-  "int": "var",
-  "char": "let",
-  "float": "const"
+  int: 'var',
+  char: 'let',
+  float: 'const'
 }
