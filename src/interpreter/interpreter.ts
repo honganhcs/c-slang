@@ -3,12 +3,18 @@ import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Context, Environment, Value } from '../types'
+import { evaluateConditionalExpression } from '../utils/expressions'
 import {
   evaluateBinaryExpression,
   evaluateLogicalExpression,
   evaluateUnaryExpression
 } from '../utils/operators'
 import * as rttc from '../utils/rttc'
+import {
+  evaluateDoWhileStatement,
+  evaluateIfStatement,
+  evaluateWhileStatement
+} from '../utils/statements'
 
 class Thunk {
   public value: Value
@@ -19,7 +25,7 @@ class Thunk {
   }
 }
 
-function* forceIt(val: any, context: Context): Value {
+export function* forceIt(val: any, context: Context): Value {
   if (val instanceof Thunk) {
     if (val.isMemoized) return val.value
 
@@ -65,7 +71,7 @@ export const pushEnvironment = (context: Context, environment: Environment) => {
 
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
-function* evaluateBlockSatement(context: Context, node: es.BlockStatement | es.Program) {
+export function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
   let result
   for (const statement of node.body) {
     result = yield* evaluate(statement, context)
@@ -137,7 +143,8 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ConditionalExpression: function* (node: es.ConditionalExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const test = yield* actualValue(node.test, context)
+    return yield* evaluateConditionalExpression(test, node.alternate, node.consequent, context)
   },
 
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
@@ -169,8 +176,9 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     throw new Error(`not supported yet: ${node.type}`)
   },
 
-  IfStatement: function* (node: es.IfStatement | es.ConditionalExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+  IfStatement: function* (node: es.IfStatement, context: Context) {
+    const test = yield* actualValue(node.test, context)
+    return yield* evaluateIfStatement(test, node.consequent, node.alternate, context)
   },
 
   ExpressionStatement: function* (node: es.ExpressionStatement, context: Context) {
@@ -182,12 +190,19 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const test = yield* actualValue(node.test, context)
+    return yield* evaluateWhileStatement(test, node.body, context)
+  },
+  
+  DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
+    const first = yield* actualValue(node.body, context)
+    const test = yield* actualValue(node.test, context)
+    return yield* evaluateDoWhileStatement(test, node.body, context)
   },
 
-
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context)
+    return result
   },
 
   Program: function* (node: es.Program, context: Context) {
