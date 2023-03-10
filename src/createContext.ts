@@ -80,6 +80,8 @@ const createEmptyRuntime = () => ({
   nodes: []
 })
 
+const getEnvironments = (context: Context) => context.runtime.environments
+
 export const createGlobalEnvironment = (): Environment => ({
   tail: null,
   name: 'global',
@@ -87,7 +89,15 @@ export const createGlobalEnvironment = (): Environment => ({
   id: '-1'
 })
 
-export const getGlobalFrame = (context: Context): Frame => context.runtime.environments[0].head
+export const getGlobalFrame = (context: Context): Frame | undefined => {
+  const env = getEnvironments(context).find(e => e.id === '-1')
+  return env?.head
+}
+
+export const getCurrentFrame = (context: Context): Frame => {
+  const env = getEnvironments(context)[0]
+  return env?.head
+}
 
 export const updateFrame = (frame: Frame, name: any, kind: any, value?: any) =>
   (frame[name] = {
