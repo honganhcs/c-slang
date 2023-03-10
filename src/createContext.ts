@@ -80,14 +80,21 @@ const createEmptyRuntime = () => ({
   nodes: []
 })
 
-const getEnvironments = (context: Context) => context.runtime.environments
-
 export const createGlobalEnvironment = (): Environment => ({
   tail: null,
   name: 'global',
   head: {},
   id: '-1'
 })
+
+export const createEmptyEnvironment = (): Environment => ({
+  tail: null,
+  name: 'local',
+  head: {},
+  id: '0'
+})
+
+const getEnvironments = (context: Context) => context.runtime.environments
 
 export const getGlobalFrame = (context: Context): Frame | undefined => {
   const env = getEnvironments(context).find(e => e.id === '-1')
