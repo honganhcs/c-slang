@@ -12,7 +12,7 @@ import { actualValue } from '../interpreter/interpreter'
 import { Thunk } from '../types'
 import { locationDummyNode } from '../utils/astCreator'
 import * as create from '../utils/astCreator'
-import { unaryOpRevMap } from '../utils/astMaps'
+import { actual } from '../utils/astMaps'
 import { makeWrapper } from '../utils/makeWrapper'
 import * as rttc from '../utils/rttc'
 
@@ -154,7 +154,7 @@ const unaryMicrocode = {
 }
 
 export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
-  const op = unaryOpRevMap[operator]
+  const op = actual['unary'](operator)
   return unaryMicrocode[op](value)
 }
 

@@ -1,6 +1,7 @@
 import * as es from 'estree'
 
 import { IOptions, Result } from '..'
+import { ensureGlobalEnvironmentExist } from '../createContext'
 import { CannotFindModuleError } from '../errors/localImportErrors'
 import { evaluate } from '../interpreter/interpreter'
 import { hoistAndMergeImports } from '../localImports/transformers/hoistAndMergeImports'
@@ -54,6 +55,8 @@ export async function sourceRunner(
 
   validateAndAnnotate(program, context)
   context.unTypecheckedCode.push(code)
+
+  ensureGlobalEnvironmentExist(context)
 
   if (context.errors.length > 0) {
     return resolvedErrorPromise

@@ -2,6 +2,7 @@
 import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
+import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import { evaluateConditionalExpression } from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
@@ -71,7 +72,7 @@ export const pushEnvironment = (context: Context, environment: Environment) => {
 
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
-export function* evaluateBlockSatement(context: Context, node: es.BlockStatement | es.Program) {
+export function* evaluateBlockSatement(node: es.BlockStatement | es.Program, context: Context) {
   let result
   for (const statement of node.body) {
     result = yield* evaluate(statement, context)
@@ -153,12 +154,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield* evaluateVariableDeclaration(node, context)
   },
 
   ContinueStatement: function* (_node: es.ContinueStatement, _context: Context) {
     throw new Error(`not supported yet: ${_node.type}`)
-  },
+  },  
 
   BreakStatement: function* (_node: es.BreakStatement, _context: Context) {
     throw new Error(`not supported yet: ${_node.type}`)
@@ -201,13 +202,13 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
-    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context)
+    const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
     return result
   },
 
   Program: function* (node: es.Program, context: Context) {
-    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context);
-    return result;
+    const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
+    return result
   }
 }
 // tslint:enable:object-literal-shorthand
