@@ -1,10 +1,13 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
 
-import { getGlobalFrame } from '../createContext'
+import { getGlobalFrame, updateFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { evaluateVariableDeclaration } from '../evaluators/declarations'
-import { evaluateConditionalExpression } from '../evaluators/expressions'
+import {
+  evaluateAssignmentExpression,
+  evaluateConditionalExpression
+} from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
   evaluateLogicalExpression,
@@ -173,7 +176,11 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    // TODO: handle non-identifier
+    const name = (node.left as es.Identifier).name
+    const left = yield* actualValue(node.left, context)
+    const right = yield* actualValue(node.right, context)
+    return yield* evaluateAssignmentExpression(node.operator, name, left, right, context)
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
@@ -194,14 +201,11 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
-    const test = yield* actualValue(node.test, context)
-    return yield* evaluateWhileStatement(test, node.body, context)
+    return yield* evaluateWhileStatement(node, context)
   },
   
   DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
-    const first = yield* actualValue(node.body, context)
-    const test = yield* actualValue(node.test, context)
-    return yield* evaluateDoWhileStatement(test, node.body, context)
+    return yield* evaluateDoWhileStatement(node, context)
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
@@ -219,5 +223,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 export function* evaluate(node: es.Node, context: Context) {
   const result = yield* evaluators[node.type](node, context)
   yield* leave(context)
+  console.log(node)
   return result
 }
