@@ -194,8 +194,7 @@ compoundStatement
     ;
 
 blockItemList
-    :   blockItem
-    |   blockItemList blockItem
+    :   blockItem+
     ;
 
 blockItem
@@ -218,19 +217,10 @@ iterationStatement
     ;
 
 forCondition
-	:   forDeclaration ';' forExpression? ';' forExpression?
-	|   expression? ';' forExpression? ';' forExpression?
+	:   declaration test=expression? ';' update=expression?
+	|   init=expression? ';' test=expression? ';' update=expression?
 	;
 
-forDeclaration
-    :   typeSpecifier initDeclaratorList
-	| 	typeSpecifier
-    ;
-
-forExpression
-    :   assignmentExpression
-    |   forExpression ',' assignmentExpression
-    ;
 
 jumpStatement
     :   'continue' ';'
