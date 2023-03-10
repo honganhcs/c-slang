@@ -12,8 +12,8 @@ export const unaryOpRevMap = {
   '-': '-',
   '+': '+',
   '!': '!',
-  'void': '*',
-  'delete': '&'
+  void: '*',
+  delete: '&'
 }
 
 export const typeMap = {

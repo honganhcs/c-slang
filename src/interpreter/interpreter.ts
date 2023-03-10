@@ -2,19 +2,19 @@
 import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
-import { Context, Environment, Value } from '../types'
 import { evaluateConditionalExpression } from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
   evaluateLogicalExpression,
   evaluateUnaryExpression
 } from '../evaluators/operators'
-import * as rttc from '../utils/rttc'
 import {
   evaluateDoWhileStatement,
   evaluateIfStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
+import { Context, Environment, Value } from '../types'
+import * as rttc from '../utils/rttc'
 
 class Thunk {
   public value: Value

@@ -12,9 +12,9 @@ import { actualValue } from '../interpreter/interpreter'
 import { Thunk } from '../types'
 import { locationDummyNode } from '../utils/astCreator'
 import * as create from '../utils/astCreator'
+import { unaryOpRevMap } from '../utils/astMaps'
 import { makeWrapper } from '../utils/makeWrapper'
 import * as rttc from '../utils/rttc'
-import { unaryOpRevMap } from '../utils/astMaps'
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
