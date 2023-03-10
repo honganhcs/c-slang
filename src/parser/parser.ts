@@ -85,7 +85,7 @@ export class DisallowedConstructError implements SourceError {
 export class FatalSyntaxError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation, public message: string) {}
+  public constructor(public location: es.SourceLocation, public message: string) { }
 
   public explain() {
     return this.message
@@ -99,7 +99,7 @@ export class FatalSyntaxError implements SourceError {
 export class MissingSemicolonError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Missing semicolon at the end of statement'
@@ -113,7 +113,7 @@ export class MissingSemicolonError implements SourceError {
 export class TrailingCommaError implements SourceError {
   public type: ErrorType.SYNTAX
   public severity: ErrorSeverity.WARNING
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Trailing comma'
@@ -172,53 +172,6 @@ class ProgramGenerator implements CVisitor<es.Program> {
   }
 
   visitErrorNode(node: ErrorNode): es.Program {
-    throw new FatalSyntaxError(
-      {
-        start: {
-          line: node.symbol.line,
-          column: node.symbol.charPositionInLine
-        },
-        end: {
-          line: node.symbol.line,
-          column: node.symbol.charPositionInLine + 1
-        }
-      },
-      `invalid syntax ${node.text}`
-    )
-  }
-}
-
-class StatementGenerator implements CVisitor<es.Statement> {
-  visitStatement(ctx: StatementContext): es.Statement {
-    // TODO: add support for various types of statements
-    const generator = new ExpressionGenerator()
-    const expr: es.Expression = ctx.expressionStatement()!.expression()!.accept(generator)
-    return {
-      type: 'ExpressionStatement',
-      expression: expr
-    }
-  }
-
-  visit(tree: ParseTree): es.Statement {
-    return tree.accept(this)
-  }
-
-  visitChildren(node: RuleNode): es.Statement {
-    const blockBody: es.Statement[] = []
-    for (let i = 0; i < node.childCount; i++) {
-      blockBody.push(node.getChild(i).accept(this))
-    }
-    return {
-      type: 'BlockStatement',
-      body: blockBody
-    }
-  }
-
-  visitTerminal(node: TerminalNode): es.Statement {
-    return node.accept(this)
-  }
-
-  visitErrorNode(node: ErrorNode): es.Statement {
     throw new FatalSyntaxError(
       {
         start: {
@@ -338,15 +291,91 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
   }
 }
 
+class StatementGenerator implements CVisitor<es.Statement> {
+  visitStatement(ctx: StatementContext): es.Statement {
+    // TODO: add support for various types of statements
+    const generator = new ExpressionGenerator()
+    const expr: es.Expression = ctx.expressionStatement()!.expression()!.accept(generator)
+    return {
+      type: 'ExpressionStatement',
+      expression: expr
+    }
+  }
+
+  visit(tree: ParseTree): es.Statement {
+    return tree.accept(this)
+  }
+
+  visitChildren(node: RuleNode): es.Statement {
+    const blockBody: es.Statement[] = []
+    for (let i = 0; i < node.childCount; i++) {
+      blockBody.push(node.getChild(i).accept(this))
+    }
+    return {
+      type: 'BlockStatement',
+      body: blockBody
+    }
+  }
+
+  visitTerminal(node: TerminalNode): es.Statement {
+    return node.accept(this)
+  }
+
+  visitErrorNode(node: ErrorNode): es.Statement {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine
+        },
+        end: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine + 1
+        }
+      },
+      `invalid syntax ${node.text}`
+    )
+  }
+}
+
 class ExpressionGenerator implements CVisitor<es.Expression> {
-  visitExpression(ctx: ExpressionContext): es.Expression {
-    // TODO: add support for chained expressions
-    return this.visitAssignmentExpression(ctx.assignmentExpression())
+  visitExpression(ctx: ExpressionContext): es.SequenceExpression {
+    const assignment = this.visitAssignmentExpression(ctx.assignmentExpression())
+    if (ctx.expression()) {
+      const expression = this.visitExpression(ctx.expression()!)
+      expression.expressions.push(assignment)
+      return expression
+    } else {
+      return {
+        type: "SequenceExpression",
+        expressions: [assignment]
+      }
+    }
   }
 
   visitAssignmentExpression(ctx: AssignmentExpressionContext): es.Expression {
-    // TODO: add support for assignment expression
-    return this.visitConditionalExpression(ctx.conditionalExpression()!)
+    if (ctx.assignmentOperator()) {
+      const lhs = ctx.unaryExpression()!
+      const rhs = ctx.assignmentExpression()!
+      if (lhs.postfixExpression() || lhs.castExpression()) {
+        // TODO handle other cases for LHS
+        const lhsExpr = this.visitUnaryExpression(lhs) as es.Identifier
+        const rhsExpr = this.visitAssignmentExpression(rhs)
+        return {
+          type: "AssignmentExpression",
+          operator: ctx.assignmentOperator()!.text as es.AssignmentOperator,
+          left: lhsExpr,
+          right: rhsExpr
+        }
+      } else {
+        throw new FatalSyntaxError(
+          contextToLocation(lhs),
+          "LHS of assignment expression not allowed"
+        )
+      }
+    } else {
+      return this.visitConditionalExpression(ctx.conditionalExpression()!)
+    }
   }
 
   visitConstantExpression(ctx: ConstantExpressionContext): es.Expression {
@@ -576,6 +605,7 @@ export function parse(source: string, context: Context) {
     try {
       const tree = parser.program()
       program = convertSource(tree)
+      console.log(program)
     } catch (error) {
       if (error instanceof FatalSyntaxError) {
         context.errors.push(error)
