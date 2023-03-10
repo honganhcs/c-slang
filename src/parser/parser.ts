@@ -85,7 +85,7 @@ export class DisallowedConstructError implements SourceError {
 export class FatalSyntaxError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation, public message: string) { }
+  public constructor(public location: es.SourceLocation, public message: string) {}
 
   public explain() {
     return this.message
@@ -99,7 +99,7 @@ export class FatalSyntaxError implements SourceError {
 export class MissingSemicolonError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation) { }
+  public constructor(public location: es.SourceLocation) {}
 
   public explain() {
     return 'Missing semicolon at the end of statement'
@@ -113,7 +113,7 @@ export class MissingSemicolonError implements SourceError {
 export class TrailingCommaError implements SourceError {
   public type: ErrorType.SYNTAX
   public severity: ErrorSeverity.WARNING
-  public constructor(public location: es.SourceLocation) { }
+  public constructor(public location: es.SourceLocation) {}
 
   public explain() {
     return 'Trailing comma'
@@ -347,7 +347,7 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
       return expression
     } else {
       return {
-        type: "SequenceExpression",
+        type: 'SequenceExpression',
         expressions: [assignment]
       }
     }
@@ -362,7 +362,7 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
         const lhsExpr = this.visitUnaryExpression(lhs) as es.Identifier
         const rhsExpr = this.visitAssignmentExpression(rhs)
         return {
-          type: "AssignmentExpression",
+          type: 'AssignmentExpression',
           operator: ctx.assignmentOperator()!.text as es.AssignmentOperator,
           left: lhsExpr,
           right: rhsExpr
@@ -370,7 +370,7 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
       } else {
         throw new FatalSyntaxError(
           contextToLocation(lhs),
-          "LHS of assignment expression not allowed"
+          'LHS of assignment expression not allowed'
         )
       }
     } else {
