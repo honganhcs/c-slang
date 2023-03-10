@@ -1,4 +1,13 @@
-import { actualValue } from '../interpreter/interpreter'
+import { BlockStatement, Program } from 'estree'
+import { actualValue, evaluate } from '../interpreter/interpreter'
+
+export function* evaluateBlockSatement(node: BlockStatement | Program, context: any) {
+  let result
+  for (const statement of node.body) {
+    result = yield* evaluate(statement, context)
+  }
+  return result
+}
 
 export function* evaluateIfStatement(test: any, consequent: any, alternate: any, context: any) {
   return test ? yield* actualValue(consequent, context) : yield* actualValue(alternate, context)

@@ -10,6 +10,7 @@ import {
   evaluateUnaryExpression
 } from '../evaluators/operators'
 import {
+  evaluateBlockSatement,
   evaluateDoWhileStatement,
   evaluateIfStatement,
   evaluateWhileStatement
@@ -71,14 +72,6 @@ export const pushEnvironment = (context: Context, environment: Environment) => {
 }
 
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
-
-export function* evaluateBlockSatement(node: es.BlockStatement | es.Program, context: Context) {
-  let result
-  for (const statement of node.body) {
-    result = yield* evaluate(statement, context)
-  }
-  return result
-}
 
 /**
  * WARNING: Do not use object literal shorthands, e.g.
