@@ -36,15 +36,9 @@ export function* evaluateAssignmentExpression(
   right: any,
   context: any
 ) {
-  console.log('in eval assingmnet')
-  console.log(name)
-  console.log(left)
-  console.log(right)
   const frame = getCurrentFrame(context)
   const id = frame[name]
   const value = assignmentMicrocode[operator](left, right)
-  console.log(value)
   updateFrame(frame, name, id.kind, value)
-  console.log(context)
   return value
 }

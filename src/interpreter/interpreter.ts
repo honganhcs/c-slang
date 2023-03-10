@@ -1,7 +1,7 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
 
-import { getGlobalFrame, updateFrame } from '../createContext'
+import { getCurrentFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import {
@@ -37,9 +37,6 @@ export function* forceIt(val: any, context: Context): Value {
     if (val.isMemoized) return val.value
 
     pushEnvironment(context, val.env)
-    console.log(context.runtime.environments.length)
-    console.log(val.env)
-    console.log(context.runtime.environments.length)
     const evalRes = yield* actualValue(val.exp, context)
     popEnvironment(context)
     val.value = evalRes
@@ -121,7 +118,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
-    const frame = getGlobalFrame(context)
+    const frame = getCurrentFrame(context)
     const id = frame[node.name]
     if (!id) {
       throw new Error(`identifier ${id} not found`)
