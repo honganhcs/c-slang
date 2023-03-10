@@ -1,7 +1,18 @@
-import { AssignmentOperator } from 'estree'
+import { AssignmentOperator, SequenceExpression } from 'estree'
 
 import { getGlobalFrame, updateFrame } from '../createContext'
-import { actualValue } from '../interpreter/interpreter'
+import { actualValue, evaluate } from '../interpreter/interpreter'
+
+export function* evaluateSequenceExpression(
+  node: SequenceExpression,
+  context: any
+) {
+  let result
+  for (const expression of node.expressions) {
+    result = yield* evaluate(expression, context)
+  }
+  return result
+}
 
 export function* evaluateConditionalExpression(
   test: any,

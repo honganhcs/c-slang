@@ -6,7 +6,8 @@ import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
-  evaluateConditionalExpression
+  evaluateConditionalExpression,
+  evaluateSequenceExpression
 } from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
@@ -36,6 +37,9 @@ export function* forceIt(val: any, context: Context): Value {
     if (val.isMemoized) return val.value
 
     pushEnvironment(context, val.env)
+    console.log(context.runtime.environments.length)
+    console.log(val.env)
+    console.log(context.runtime.environments.length)
     const evalRes = yield* actualValue(val.exp, context)
     popEnvironment(context)
     val.value = evalRes
@@ -130,11 +134,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   SequenceExpression: function* (node: es.SequenceExpression, context: Context) {
-    let result
-    for (const expression of node.expressions) {
-      result = yield* evaluate(expression, context)
-    }
-    return result
+    return yield* evaluateSequenceExpression(node, context)
   },
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
@@ -223,6 +223,5 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 export function* evaluate(node: es.Node, context: Context) {
   const result = yield* evaluators[node.type](node, context)
   yield* leave(context)
-  console.log(node)
   return result
 }
