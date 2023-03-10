@@ -3,10 +3,7 @@ import { AssignmentOperator, SequenceExpression } from 'estree'
 import { getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
-export function* evaluateSequenceExpression(
-  node: SequenceExpression,
-  context: any
-) {
+export function* evaluateSequenceExpression(node: SequenceExpression, context: any) {
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
