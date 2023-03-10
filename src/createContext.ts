@@ -90,10 +90,10 @@ export const createGlobalEnvironment = (): Environment => ({
 export const getGlobalFrame = (context: Context): Frame => context.runtime.environments[0].head
 
 export const createBinding = (frame: Frame, name: any, kind: any, value?: any) =>
-  frame[name] = {
+  (frame[name] = {
     kind: kind,
     value: value
-  }
+  })
 
 export const createEmptyContext = <T>(
   variant: Variant,

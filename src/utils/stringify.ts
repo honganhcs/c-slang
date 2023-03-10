@@ -1,6 +1,6 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
-import { Type, Value } from '../types'
 import { forceIt } from '../evaluators/operators'
+import { Type, Value } from '../types'
 
 export interface ArrayLike {
   replPrefix: string

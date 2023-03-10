@@ -29,6 +29,6 @@ const typeRevMap = {
 }
 
 export const actual = {
-  'unary': (raw: string) => unaryOpRevMap[raw],
-  'kind': (raw: string) => typeRevMap[raw]
+  unary: (raw: string) => unaryOpRevMap[raw],
+  kind: (raw: string) => typeRevMap[raw]
 }

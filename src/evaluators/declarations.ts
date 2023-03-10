@@ -1,7 +1,8 @@
-import { Expression, Identifier, VariableDeclaration, VariableDeclarator } from "estree"
-import { createBinding, getGlobalFrame } from "../createContext"
-import { actualValue } from "../interpreter/interpreter"
-import { actual } from "../utils/astMaps"
+import { Expression, Identifier, VariableDeclaration, VariableDeclarator } from 'estree'
+
+import { createBinding, getGlobalFrame } from '../createContext'
+import { actualValue } from '../interpreter/interpreter'
+import { actual } from '../utils/astMaps'
 
 export function* evaluateVariableDeclaration(node: VariableDeclaration, context: any) {
   const kind = actual['kind'](node.kind)
