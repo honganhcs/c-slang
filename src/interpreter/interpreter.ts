@@ -1,5 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
+
 import { getGlobalFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { evaluateVariableDeclaration } from '../evaluators/declarations'

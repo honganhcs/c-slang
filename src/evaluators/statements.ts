@@ -1,4 +1,5 @@
 import { BlockStatement, Program } from 'estree'
+
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
 export function* evaluateBlockSatement(node: BlockStatement | Program, context: any) {
