@@ -1,4 +1,5 @@
 import { AssignmentOperator } from 'estree'
+
 import { getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue } from '../interpreter/interpreter'
 
@@ -17,7 +18,7 @@ const assignmentMicrocode = {
   '-=': (l: any, r: any) => l - r,
   '*=': (l: any, r: any) => l * r,
   '/=': (l: any, r: any) => l / r,
-  '%=': (l: any, r: any) => l % r,
+  '%=': (l: any, r: any) => l % r
 }
 
 export function* evaluateAssignmentExpression(
@@ -27,7 +28,7 @@ export function* evaluateAssignmentExpression(
   right: any,
   context: any
 ) {
-  console.log("in eval assingmnet")
+  console.log('in eval assingmnet')
   console.log(name)
   console.log(left)
   console.log(right)
