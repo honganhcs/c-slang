@@ -8,6 +8,14 @@ export const unaryOpMap: { [key: string]: UnaryOperator } = {
   '&': 'delete'
 }
 
+export const unaryOpRevMap = {
+  '-': '-',
+  '+': '+',
+  '!': '!',
+  'void': '*',
+  'delete': '&'
+}
+
 export const typeMap = {
   int: 'var',
   char: 'let',

@@ -3,18 +3,18 @@ import * as es from 'estree'
 
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Context, Environment, Value } from '../types'
-import { evaluateConditionalExpression } from '../utils/expressions'
+import { evaluateConditionalExpression } from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
   evaluateLogicalExpression,
   evaluateUnaryExpression
-} from '../utils/operators'
+} from '../evaluators/operators'
 import * as rttc from '../utils/rttc'
 import {
   evaluateDoWhileStatement,
   evaluateIfStatement,
   evaluateWhileStatement
-} from '../utils/statements'
+} from '../evaluators/statements'
 
 class Thunk {
   public value: Value
