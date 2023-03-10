@@ -134,7 +134,8 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   SequenceExpression: function* (node: es.SequenceExpression, context: Context) {
-    return yield* evaluateSequenceExpression(node, context)
+    const result = yield* forceIt(yield* evaluateSequenceExpression(node, context), context)
+    return result
   },
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
