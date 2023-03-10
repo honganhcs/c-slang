@@ -71,7 +71,7 @@ export const pushEnvironment = (context: Context, environment: Environment) => {
 
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
-export function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
+export function* evaluateBlockSatement(context: Context, node: es.BlockStatement | es.Program) {
   let result
   for (const statement of node.body) {
     result = yield* evaluate(statement, context)
