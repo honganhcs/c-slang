@@ -43,8 +43,6 @@ import { ExpressionStatementContext } from './CParser'
 import { SelectionStatementContext } from './CParser'
 import { IterationStatementContext } from './CParser'
 import { ForConditionContext } from './CParser'
-import { ForDeclarationContext } from './CParser'
-import { ForExpressionContext } from './CParser'
 import { JumpStatementContext } from './CParser'
 import { FunctionDefinitionContext } from './CParser'
 import { ProgramItemContext } from './CParser'
@@ -344,20 +342,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitForCondition?: (ctx: ForConditionContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.forDeclaration`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitForDeclaration?: (ctx: ForDeclarationContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.forExpression`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitForExpression?: (ctx: ForExpressionContext) => Result
 
   /**
    * Visit a parse tree produced by `CParser.jumpStatement`.

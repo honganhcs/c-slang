@@ -12,6 +12,7 @@ import {
   AdditiveExpressionContext,
   AssignmentExpressionContext,
   CastExpressionContext,
+  CompoundStatementContext,
   ConditionalExpressionContext,
   ConstantExpressionContext,
   CParser,
@@ -20,8 +21,11 @@ import {
   DirectDeclaratorContext,
   EqualityExpressionContext,
   ExpressionContext,
+  ExpressionStatementContext,
   InitDeclaratorContext,
   InitDeclaratorListContext,
+  IterationStatementContext,
+  JumpStatementContext,
   LogicalAndExpressionContext,
   LogicalOrExpressionContext,
   MultiplicativeExpressionContext,
@@ -30,6 +34,7 @@ import {
   ProgramContext,
   ProgramItemContext,
   RelationalExpressionContext,
+  SelectionStatementContext,
   StatementContext,
   UnaryExpressionContext
 } from '../lang/CParser'
@@ -293,12 +298,124 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
 
 class StatementGenerator implements CVisitor<es.Statement> {
   visitStatement(ctx: StatementContext): es.Statement {
-    // TODO: add support for various types of statements
+    if (ctx.compoundStatement()) {
+      return this.visitCompoundStatement(ctx.compoundStatement()!)
+    } else if (ctx.expressionStatement()) {
+      return this.visitExpressionStatement(ctx.expressionStatement()!)
+    } else if (ctx.selectionStatement()) {
+      return this.visitSelectionStatement(ctx.selectionStatement()!)
+    } else if (ctx.iterationStatement()) {
+      return this.visitIterationStatement(ctx.iterationStatement()!)
+    } else {
+      return this.visitJumpStatement(ctx.jumpStatement()!)
+    }
+  }
+
+  visitCompoundStatement(ctx: CompoundStatementContext): es.Statement {
+    const blockBody: es.Statement[] = []
+    if (ctx.blockItemList()) {
+      const blockItems = ctx.blockItemList()!.blockItem()
+      blockItems.forEach(item => {
+        if (item.statement()) {
+          blockBody.push(this.visitStatement(item.statement()!))
+        } else {
+          const generator = new DeclarationGenerator()
+          blockBody.push(item.declaration()!.accept(generator))
+        }
+      })
+    }
+    return {
+      type: 'BlockStatement',
+      body: blockBody
+    }
+  }
+
+  visitExpressionStatement(ctx: ExpressionStatementContext): es.Statement {
     const generator = new ExpressionGenerator()
-    const expr: es.Expression = ctx.expressionStatement()!.expression()!.accept(generator)
+    const expr: es.Expression = ctx.expression()!.accept(generator)
     return {
       type: 'ExpressionStatement',
       expression: expr
+    }
+  }
+
+  visitSelectionStatement(ctx: SelectionStatementContext): es.Statement {
+    const generator = new ExpressionGenerator()
+    const test = ctx.expression().accept(generator)
+    const consequent = this.visitStatement(ctx.statement(0))
+    let alternate = null
+    if (ctx.statement(1)) {
+      alternate = this.visitStatement(ctx.statement(1))
+    }
+    return {
+      type: 'IfStatement',
+      test: test,
+      consequent: consequent,
+      alternate: alternate
+    }
+  }
+
+  visitIterationStatement(ctx: IterationStatementContext): es.Statement {
+    const exprGenerator = new ExpressionGenerator()
+    const body = this.visitStatement(ctx.statement())
+    if (ctx.Do()) {
+      return {
+        type: 'DoWhileStatement',
+        test: ctx.expression()!.accept(exprGenerator),
+        body: body
+      }
+    } else if (ctx.While()) {
+      return {
+        type: 'WhileStatement',
+        test: ctx.expression()!.accept(exprGenerator),
+        body: body
+      }
+    } else {
+      const forCondition = ctx.forCondition()!
+      let init = null
+      let test = null
+      let update = null
+      if (forCondition.declaration()) {
+        const declGenerator = new DeclarationGenerator()
+        init = forCondition.declaration()?.accept(declGenerator)
+      } else if (forCondition._init) {
+        init = forCondition._init.accept(exprGenerator)
+      }
+      if (forCondition._test) {
+        test = forCondition._test.accept(exprGenerator)
+      }
+      if (forCondition._update) {
+        update = forCondition._update.accept(exprGenerator)
+      }
+      return {
+        type: 'ForStatement',
+        init: init,
+        test: test,
+        update: update,
+        body: body
+      }
+    }
+  }
+
+  visitJumpStatement(ctx: JumpStatementContext): es.Statement {
+    if (ctx.Continue()) {
+      return {
+        type: 'ContinueStatement'
+      }
+    } else if (ctx.Break()) {
+      return {
+        type: 'BreakStatement'
+      }
+    } else {
+      const generator = new ExpressionGenerator()
+      let argument = null
+      if (ctx.expression()) {
+        argument = ctx.expression()!.accept(generator)
+      }
+      return {
+        type: 'ReturnStatement',
+        argument: argument
+      }
     }
   }
 
