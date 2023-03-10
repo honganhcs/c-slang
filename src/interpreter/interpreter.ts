@@ -159,7 +159,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ContinueStatement: function* (_node: es.ContinueStatement, _context: Context) {
     throw new Error(`not supported yet: ${_node.type}`)
-  },  
+  },
 
   BreakStatement: function* (_node: es.BreakStatement, _context: Context) {
     throw new Error(`not supported yet: ${_node.type}`)
