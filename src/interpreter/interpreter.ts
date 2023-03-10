@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
-
+import { getGlobalFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import { evaluateConditionalExpression } from '../evaluators/expressions'
@@ -113,7 +113,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const frame = getGlobalFrame(context)
+    const id = frame[node.name]
+    if (!id) {
+      throw new Error(`identifier ${id} not found`)
+    }
+    return id.value
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {

@@ -18,8 +18,8 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, kind: any, contex
   if (init) {
     init = yield* actualValue(init as Expression, context)
   }
-  const env = getGlobalFrame(context)
+  const frame = getGlobalFrame(context)
   const id = node.id as Identifier
-  createBinding(env, id.name, kind, init)
+  createBinding(frame, id.name, kind, init)
   return init
 }
