@@ -126,8 +126,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     throw new Error(`not supported yet: ${node.type}`)
   },
 
-  NewExpression: function* (node: es.NewExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+  SequenceExpression: function* (node: es.SequenceExpression, context: Context) {
+    let result
+    for (const expression of node.expressions) {
+      result = yield* evaluate(expression, context)
+    }
+    return result
   },
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
