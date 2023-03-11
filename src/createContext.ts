@@ -87,30 +87,36 @@ export const createGlobalEnvironment = (): Environment => ({
   id: '-1'
 })
 
-export const createEmptyEnvironment = (): Environment => ({
-  tail: null,
+export const extendCurrentEnvironment = (context: Context): Environment => ({
+  // TODO: refactor name and id
+  tail: context.runtime.environments[0],
   name: 'local',
   head: {},
   id: '0'
 })
 
-const getEnvironments = (context: Context) => context.runtime.environments
-
-export const getGlobalFrame = (context: Context): Frame | undefined => {
-  const env = getEnvironments(context).find(e => e.id === '-1')
-  return env?.head
-}
-
 export const getCurrentFrame = (context: Context): Frame => {
-  const env = getEnvironments(context)[0]
+  const env = context.runtime.environments[0]
   return env?.head
 }
 
-export const updateFrame = (frame: Frame, name: any, kind: any, value?: any) =>
-  (frame[name] = {
-    kind: kind,
-    value: value
-  })
+export const lookupFrame = (context: Context, name: string) => {
+  let frame
+  for (const env of context.runtime.environments) {
+    frame = env.head
+    if (frame[name]) {
+      return frame
+    }
+  }
+  return frame
+}
+
+export const updateFrame = (frame: Frame, name: any, kind: any, value?: any) => {
+  frame[name] = {
+    'kind': kind,
+    'value': value
+  }
+}
 
 export const createEmptyContext = <T>(
   variant: Variant,

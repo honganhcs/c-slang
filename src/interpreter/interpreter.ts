@@ -1,7 +1,7 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
 
-import { getCurrentFrame } from '../createContext'
+import { extendCurrentEnvironment, lookupFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import {
@@ -118,12 +118,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
-    const frame = getCurrentFrame(context)
-    const id = frame[node.name]
-    if (!id) {
-      throw new Error(`identifier ${id} not found`)
+    const name = node.name
+    const frame = lookupFrame(context, name)
+    if (!frame) {
+      throw new Error(`cannot find variable ${name}`)
     }
-    return id.value
+    return frame[name].value
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
@@ -207,7 +207,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
+    const env = extendCurrentEnvironment(context)
+    pushEnvironment(context, env)
     const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
+    popEnvironment(context)
     return result
   },
 

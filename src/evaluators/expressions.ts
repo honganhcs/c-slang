@@ -1,6 +1,6 @@
 import { AssignmentOperator, SequenceExpression } from 'estree'
 
-import { getCurrentFrame, updateFrame } from '../createContext'
+import { lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
 export function* evaluateSequenceExpression(node: SequenceExpression, context: any) {
@@ -36,9 +36,11 @@ export function* evaluateAssignmentExpression(
   right: any,
   context: any
 ) {
-  const frame = getCurrentFrame(context)
-  const id = frame[name]
-  const value = assignmentMicrocode[operator](left, right)
-  updateFrame(frame, name, id.kind, value)
-  return value
+  const frame = lookupFrame(context, name)
+  if (frame) {
+    const id = frame[name]
+    const value = assignmentMicrocode[operator](left, right)
+    updateFrame(frame, name, id.kind, value)
+    return value
+  }
 }
