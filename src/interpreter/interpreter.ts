@@ -96,15 +96,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     return node.value
   },
 
-  TemplateLiteral: function* (node: es.TemplateLiteral) {
-    // Expressions like `${1}` are not allowed, so no processing needed
-    return node.quasis[0].value.cooked
-  },
-
-  ThisExpression: function* (node: es.ThisExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
-  },
-
   ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
     throw new Error(`not supported yet: ${node.type}`)
   },

@@ -22,7 +22,6 @@ export function* evaluateWhileStatement(node: WhileStatement, context: any) {
 }
 
 export function* evaluateDoWhileStatement(node: DoWhileStatement, context: any) {
-  let test
   do {
     yield* evaluate(node.body, context)
   } while ((test = yield* actualValue(node.test, context)))
