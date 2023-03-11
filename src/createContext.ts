@@ -113,8 +113,8 @@ export const lookupFrame = (context: Context, name: string) => {
 
 export const updateFrame = (frame: Frame, name: any, kind: any, value?: any) => {
   frame[name] = {
-    'kind': kind,
-    'value': value
+    kind: kind,
+    value: value
   }
 }
 
