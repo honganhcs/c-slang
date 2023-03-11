@@ -7,7 +7,8 @@ import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
   evaluateConditionalExpression,
-  evaluateSequenceExpression
+  evaluateSequenceExpression,
+  evaluateUpdateExpression
 } from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
@@ -17,6 +18,7 @@ import {
 import {
   evaluateBlockSatement,
   evaluateDoWhileStatement,
+  evaluateForStatement,
   evaluateIfStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
@@ -96,15 +98,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     return node.value
   },
 
-  TemplateLiteral: function* (node: es.TemplateLiteral) {
-    // Expressions like `${1}` are not allowed, so no processing needed
-    return node.quasis[0].value.cooked
-  },
-
-  ThisExpression: function* (node: es.ThisExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
-  },
-
   ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
     throw new Error(`not supported yet: ${node.type}`)
   },
@@ -170,11 +163,19 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const env = extendCurrentEnvironment(context)
+    pushEnvironment(context, env)
+    const result = yield* evaluateForStatement(node, context)
+    popEnvironment(context)
+    return result
   },
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
     return yield* evaluateAssignmentExpression(node.operator, node.left, node.right, context)
+  },
+
+  UpdateExpression: function* (node: es.UpdateExpression, context: Context) {
+    return yield* evaluateUpdateExpression(node.operator, node.argument, node.prefix, context)
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {

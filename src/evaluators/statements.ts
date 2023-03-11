@@ -1,4 +1,4 @@
-import { BlockStatement, DoWhileStatement, Program, WhileStatement } from 'estree'
+import { BlockStatement, DoWhileStatement, ForStatement, Program, WhileStatement } from 'estree'
 
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
@@ -14,17 +14,30 @@ export function* evaluateIfStatement(test: any, consequent: any, alternate: any,
   return test ? yield* actualValue(consequent, context) : yield* actualValue(alternate, context)
 }
 
-export function* evaluateWhileStatement(node: WhileStatement, context: any) {
-  while ((test = yield* actualValue(node.test, context))) {
-    yield* evaluate(node.body, context)
+export function* evaluateForStatement(node: ForStatement, context: any) {
+  let result
+  for (
+    node.init && (result = yield* actualValue(node.init, context));
+    node.test && (result = yield* actualValue(node.test, context));
+    node.update && (result = yield* actualValue(node.update, context))
+  ) {
+    result = yield* evaluate(node.body, context)
   }
-  return test
+  return result
+}
+
+export function* evaluateWhileStatement(node: WhileStatement, context: any) {
+  let result
+  while ((result = yield* actualValue(node.test, context))) {
+    result = yield* evaluate(node.body, context)
+  }
+  return result
 }
 
 export function* evaluateDoWhileStatement(node: DoWhileStatement, context: any) {
-  let test
+  let result
   do {
-    yield* evaluate(node.body, context)
-  } while ((test = yield* actualValue(node.test, context)))
-  return test
+    result = yield* evaluate(node.body, context)
+  } while ((result = yield* actualValue(node.test, context)))
+  return result
 }

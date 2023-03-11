@@ -76,7 +76,7 @@ export function validateAndAnnotate(
             context.errors.push(new ConstAssignment(lastAncestor, name))
           }
           if (a.type === 'ForStatement' && a.init !== lastAncestor && a.update !== lastAncestor) {
-            context.errors.push(new NoAssignmentToForVariable(lastAncestor))
+            // context.errors.push(new NoAssignmentToForVariable(lastAncestor))
           }
         }
         break

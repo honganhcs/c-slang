@@ -1,4 +1,4 @@
-import { AssignmentOperator, SequenceExpression } from 'estree'
+import { AssignmentOperator, Identifier, SequenceExpression, UpdateOperator } from 'estree'
 
 import { lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
@@ -37,13 +37,36 @@ export function* evaluateAssignmentExpression(
 ) {
   // TODO: handle non-identifier
   const name = left.name
-  const kind = left.kind
   const lhs = yield* actualValue(left, context)
   const rhs = yield* actualValue(right, context)
   const frame = lookupFrame(context, name)
   if (frame) {
+    const id = frame[name]
     const value = assignmentMicrocode[operator](lhs, rhs)
-    updateFrame(frame, name, kind, value)
+    updateFrame(frame, name, id.kind, value)
     return value
+  }
+}
+
+const updateMicrocode = {
+  '++': (v: any) => ++v,
+  '--': (v: any) => --v
+}
+
+export function* evaluateUpdateExpression(
+  operator: UpdateOperator,
+  argument: any,
+  prefix: any,
+  context: any
+) {
+  // TODO: handle non-identifier
+  const name = argument.name
+  const before = yield* actualValue(argument, context)
+  const after = updateMicrocode[operator](before)
+  const frame = lookupFrame(context, name)
+  if (frame) {
+    const id = frame[name]
+    updateFrame(frame, name, id.kind, after)
+    return prefix ? after : before
   }
 }
