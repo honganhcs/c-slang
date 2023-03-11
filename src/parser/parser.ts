@@ -342,10 +342,11 @@ class StatementGenerator implements CVisitor<es.Statement> {
   visitSelectionStatement(ctx: SelectionStatementContext): es.Statement {
     const generator = new ExpressionGenerator()
     const test = ctx.expression().accept(generator)
-    const consequent = this.visitStatement(ctx.statement(0))
+    const statements = ctx.statement()
+    const consequent = this.visitStatement(statements[0])
     let alternate = null
-    if (ctx.statement(1)) {
-      alternate = this.visitStatement(ctx.statement(1))
+    if (statements.length == 2) {
+      alternate = this.visitStatement(statements[1])
     }
     return {
       type: 'IfStatement',
