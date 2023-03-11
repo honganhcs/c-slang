@@ -170,7 +170,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   UpdateExpression: function* (node: es.UpdateExpression, context: Context) {
-    return yield* evaluateUpdateExpression(node.operator, node.operator, node.prefix, context)
+    return yield* evaluateUpdateExpression(node.operator, node.argument, node.prefix, context)
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {

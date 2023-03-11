@@ -49,8 +49,8 @@ export function* evaluateAssignmentExpression(
 }
 
 const updateMicrocode = {
-  '++': (v: any, pre: boolean) => pre ? ++v : v++,
-  '--': (v: any, pre: boolean) => pre ? --v : v--
+  '++': (v: any, pre: boolean) => (pre ? ++v : v++),
+  '--': (v: any, pre: boolean) => (pre ? --v : v--)
 }
 
 export function* evaluateUpdateExpression(
