@@ -103,9 +103,9 @@ export const getCurrentFrame = (context: Context): Frame => {
 export const lookupFrame = (context: Context, name: string) => {
   let frame
   for (const env of context.runtime.environments) {
-    frame = env.head
-    if (frame[name]) {
-      return frame
+    if (env.head[name]) {
+      frame = env.head
+      break
     }
   }
   return frame
