@@ -31,16 +31,19 @@ const assignmentMicrocode = {
 
 export function* evaluateAssignmentExpression(
   operator: AssignmentOperator,
-  name: any,
   left: any,
   right: any,
   context: any
 ) {
+  // TODO: handle non-identifier
+  const name = left.name
+  const kind = left.kind
+  const lhs = yield* actualValue(left, context)
+  const rhs = yield* actualValue(right, context)
   const frame = lookupFrame(context, name)
   if (frame) {
-    const id = frame[name]
-    const value = assignmentMicrocode[operator](left, right)
-    updateFrame(frame, name, id.kind, value)
+    const value = assignmentMicrocode[operator](lhs, rhs)
+    updateFrame(frame, name, kind, value)
     return value
   }
 }

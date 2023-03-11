@@ -174,11 +174,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
-    // TODO: handle non-identifier
-    const name = (node.left as es.Identifier).name
-    const left = yield* actualValue(node.left, context)
-    const right = yield* actualValue(node.right, context)
-    return yield* evaluateAssignmentExpression(node.operator, name, left, right, context)
+    return yield* evaluateAssignmentExpression(node.operator, node.left, node.right, context)
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
