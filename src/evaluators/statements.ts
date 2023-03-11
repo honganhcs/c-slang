@@ -19,9 +19,10 @@ export function* evaluateForStatement(node: ForStatement, context: any) {
   for (
     node.init && (result = yield* actualValue(node.init, context));
     node.test && (result = yield* actualValue(node.test, context));
-    node.update && (result = yield* actualValue(node.update, context))) {
-      result = yield* evaluate(node.body, context)
-    }
+    node.update && (result = yield* actualValue(node.update, context))
+  ) {
+    result = yield* evaluate(node.body, context)
+  }
   return result
 }
 
