@@ -1,20 +1,27 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
 
+import { extendCurrentEnvironment, lookupFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
-import { Context, Environment, Value } from '../types'
-import { evaluateConditionalExpression } from '../utils/expressions'
+import { evaluateVariableDeclaration } from '../evaluators/declarations'
+import {
+  evaluateAssignmentExpression,
+  evaluateConditionalExpression,
+  evaluateSequenceExpression
+} from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
   evaluateLogicalExpression,
   evaluateUnaryExpression
-} from '../utils/operators'
-import * as rttc from '../utils/rttc'
+} from '../evaluators/operators'
 import {
+  evaluateBlockSatement,
   evaluateDoWhileStatement,
   evaluateIfStatement,
   evaluateWhileStatement
-} from '../utils/statements'
+} from '../evaluators/statements'
+import { Context, Environment, Value } from '../types'
+import * as rttc from '../utils/rttc'
 
 class Thunk {
   public value: Value
@@ -71,14 +78,6 @@ export const pushEnvironment = (context: Context, environment: Environment) => {
 
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
-export function* evaluateBlockSatement(context: Context, node: es.BlockStatement | es.Program) {
-  let result
-  for (const statement of node.body) {
-    result = yield* evaluate(statement, context)
-  }
-  return result
-}
-
 /**
  * WARNING: Do not use object literal shorthands, e.g.
  *   {
@@ -119,7 +118,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const name = node.name
+    const frame = lookupFrame(context, name)
+    if (!frame) {
+      throw new Error(`cannot find variable ${name}`)
+    }
+    return frame[name].value
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
@@ -127,10 +131,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   SequenceExpression: function* (node: es.SequenceExpression, context: Context) {
-    let result
-    for (const expression of node.expressions) {
-      result = yield* evaluate(expression, context)
-    }
+    const result = yield* forceIt(yield* evaluateSequenceExpression(node, context), context)
     return result
   },
 
@@ -157,7 +158,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield* evaluateVariableDeclaration(node, context)
   },
 
   ContinueStatement: function* (_node: es.ContinueStatement, _context: Context) {
@@ -173,7 +174,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield* evaluateAssignmentExpression(node.operator, node.left, node.right, context)
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
@@ -194,24 +195,24 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
-    const test = yield* actualValue(node.test, context)
-    return yield* evaluateWhileStatement(test, node.body, context)
+    return yield* evaluateWhileStatement(node, context)
   },
   
   DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
-    const first = yield* actualValue(node.body, context)
-    const test = yield* actualValue(node.test, context)
-    return yield* evaluateDoWhileStatement(test, node.body, context)
+    return yield* evaluateDoWhileStatement(node, context)
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
-    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context)
+    const env = extendCurrentEnvironment(context)
+    pushEnvironment(context, env)
+    const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
+    popEnvironment(context)
     return result
   },
 
   Program: function* (node: es.Program, context: Context) {
-    const result = yield* forceIt(yield* evaluateBlockSatement(context, node), context);
-    return result;
+    const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
+    return result
   }
 }
 // tslint:enable:object-literal-shorthand

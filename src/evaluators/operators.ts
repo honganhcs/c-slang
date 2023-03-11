@@ -10,10 +10,11 @@ import {
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { actualValue } from '../interpreter/interpreter'
 import { Thunk } from '../types'
-import { locationDummyNode } from './astCreator'
-import * as create from './astCreator'
-import { makeWrapper } from './makeWrapper'
-import * as rttc from './rttc'
+import { locationDummyNode } from '../utils/astCreator'
+import * as create from '../utils/astCreator'
+import { actual } from '../utils/astMaps'
+import { makeWrapper } from '../utils/makeWrapper'
+import * as rttc from '../utils/rttc'
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
@@ -153,7 +154,8 @@ const unaryMicrocode = {
 }
 
 export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
-  return unaryMicrocode[operator](value)
+  const op = actual['unary'](operator)
+  return unaryMicrocode[op](value)
 }
 
 export function binaryOp(

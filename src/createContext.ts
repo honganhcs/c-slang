@@ -1,6 +1,6 @@
 // Variable determining chapter of Source is contained in this file.
 
-import { Context, Environment, Variant } from './types'
+import { Context, Environment, Frame, Variant } from './types'
 
 export class LazyBuiltIn {
   func: (...arg0: any) => any
@@ -86,6 +86,37 @@ export const createGlobalEnvironment = (): Environment => ({
   head: {},
   id: '-1'
 })
+
+export const extendCurrentEnvironment = (context: Context): Environment => ({
+  // TODO: refactor name and id
+  tail: context.runtime.environments[0],
+  name: 'local',
+  head: {},
+  id: '0'
+})
+
+export const getCurrentFrame = (context: Context): Frame => {
+  const env = context.runtime.environments[0]
+  return env?.head
+}
+
+export const lookupFrame = (context: Context, name: string) => {
+  let frame
+  for (const env of context.runtime.environments) {
+    if (env.head[name]) {
+      frame = env.head
+      break
+    }
+  }
+  return frame
+}
+
+export const updateFrame = (frame: Frame, name: any, kind: any, value?: any) => {
+  frame[name] = {
+    kind: kind,
+    value: value
+  }
+}
 
 export const createEmptyContext = <T>(
   variant: Variant,
