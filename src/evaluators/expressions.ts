@@ -49,8 +49,8 @@ export function* evaluateAssignmentExpression(
 }
 
 const updateMicrocode = {
-  '++': (v: any, pre: boolean) => (pre ? ++v : v++),
-  '--': (v: any, pre: boolean) => (pre ? --v : v--)
+  '++': (v: any) => ++v,
+  '--': (v: any) => --v
 }
 
 export function* evaluateUpdateExpression(
@@ -62,7 +62,7 @@ export function* evaluateUpdateExpression(
   // TODO: handle non-identifier
   const name = argument.name
   const before = yield* actualValue(argument, context)
-  const after = updateMicrocode[operator](before, prefix)
+  const after = updateMicrocode[operator](before)
   const frame = lookupFrame(context, name)
   if (frame) {
     const id = frame[name]

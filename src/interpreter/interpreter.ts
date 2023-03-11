@@ -18,6 +18,7 @@ import {
 import {
   evaluateBlockSatement,
   evaluateDoWhileStatement,
+  evaluateForStatement,
   evaluateIfStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
@@ -162,7 +163,11 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const env = extendCurrentEnvironment(context)
+    pushEnvironment(context, env)
+    const result = yield* evaluateForStatement(node, context)
+    popEnvironment(context)
+    return result
   },
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
