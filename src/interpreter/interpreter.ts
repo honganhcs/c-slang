@@ -7,7 +7,8 @@ import { evaluateVariableDeclaration } from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
   evaluateConditionalExpression,
-  evaluateSequenceExpression
+  evaluateSequenceExpression,
+  evaluateUpdateExpression
 } from '../evaluators/expressions'
 import {
   evaluateBinaryExpression,
@@ -166,6 +167,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   AssignmentExpression: function* (node: es.AssignmentExpression, context: Context) {
     return yield* evaluateAssignmentExpression(node.operator, node.left, node.right, context)
+  },
+
+  UpdateExpression: function* (node: es.UpdateExpression, context: Context) {
+    return yield* evaluateUpdateExpression(node.operator, node.operator, node.prefix, context)
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
