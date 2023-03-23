@@ -14,8 +14,10 @@ export function* evaluateBlockSatement(node: BlockStatement | Program, context: 
 }
 
 export function* evaluateIfStatement(test: any, consequent: any, alternate: any, context: any) {
-  return (test && (yield* actualValue(consequent, context)))
-    || (alternate && (yield* actualValue(alternate, context)))
+  return (
+    (test && (yield* actualValue(consequent, context))) ||
+    (alternate && (yield* actualValue(alternate, context)))
+  )
 }
 
 export function* evaluateForStatement(node: ForStatement, context: any) {

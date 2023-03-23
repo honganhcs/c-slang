@@ -170,7 +170,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
-    context.prelude = 'loop'
+    context.prelude = 'for'
     const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
     const result = yield* evaluateForStatement(node, context)
@@ -205,14 +205,14 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
-    context.prelude = 'loop'
+    context.prelude = 'while'
     const result = yield* evaluateWhileStatement(node, context)
     context.prelude = null
     return result
   },
   
   DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
-    context.prelude = 'loop'
+    context.prelude = 'do-while'
     const result = yield* evaluateDoWhileStatement(node, context)
     context.prelude = null
     return result
