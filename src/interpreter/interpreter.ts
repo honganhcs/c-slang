@@ -175,12 +175,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
+    context.prelude = 'loop'
     const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
-    context.prelude = 'loop'
     const result = yield* evaluateForStatement(node, context)
-    context.prelude = null
     popEnvironment(context, env.id)
+    context.prelude = null
     return result
   },
 
