@@ -22,6 +22,7 @@ import {
   EqualityExpressionContext,
   ExpressionContext,
   ExpressionStatementContext,
+  FunctionDefinitionContext,
   InitDeclaratorContext,
   InitDeclaratorListContext,
   IterationStatementContext,
@@ -29,6 +30,8 @@ import {
   LogicalAndExpressionContext,
   LogicalOrExpressionContext,
   MultiplicativeExpressionContext,
+  ParameterDeclarationContext,
+  ParameterListContext,
   PostfixExpressionContext,
   PrimaryExpressionContext,
   ProgramContext,
@@ -157,10 +160,12 @@ class ProgramGenerator implements CVisitor<es.Program> {
     if (ctx.statement()) {
       const generator = new StatementGenerator()
       return ctx.statement()!.accept(generator)
-    } else {
-      // TODO: add support for FunctionDefinition
+    } else if (ctx.declaration()) {
       const generator = new DeclarationGenerator()
       return ctx.declaration()!.accept(generator)
+    } else {
+      const generator = new FunctionDefinitionGenerator()
+      return ctx.functionDefinition()!.accept(generator)
     }
   }
 
@@ -223,6 +228,67 @@ class DeclarationGenerator implements CVisitor<es.VariableDeclaration> {
   }
 
   visitErrorNode(node: ErrorNode): es.VariableDeclaration {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine
+        },
+        end: {
+          line: node.symbol.line,
+          column: node.symbol.charPositionInLine + 1
+        }
+      },
+      `invalid syntax ${node.text}`
+    )
+  }
+}
+
+class FunctionDefinitionGenerator implements CVisitor<es.FunctionDeclaration> {
+  visitFunctionDefinition(ctx: FunctionDefinitionContext): es.FunctionDeclaration {
+    const returnType: es.Identifier = {
+      type: "Identifier",
+      name: ctx.typeSpecifier().text
+    }
+    // TODO: handle function pointers
+    const name = ctx.declarator().directDeclarator().directDeclarator()!.Identifier()!.text
+    const functionName: es.Identifier = {
+      type: "Identifier",
+      name: name
+    }
+    const params = ctx.declarator().directDeclarator().parameterTypeList()!.parameterList()
+    const expressionGenerator = new ExpressionGenerator()
+    const paramsList: Array<es.Pattern> = []
+    let head: ParameterListContext | undefined = params
+    while(head) {
+      paramsList.push(head.parameterDeclaration().accept(expressionGenerator) as es.MemberExpression)
+      head = head.parameterList()
+    }
+    paramsList.push(returnType)
+    paramsList.reverse()
+    const statementGenerator = new StatementGenerator()
+    const bodyBlock = ctx.compoundStatement().accept(statementGenerator) as es.BlockStatement
+    return {
+      type: "FunctionDeclaration",
+      id: functionName,
+      params: paramsList,
+      body: bodyBlock
+    }
+  }
+
+  visit(tree: ParseTree): es.FunctionDeclaration {
+    return tree.accept(this)
+  }
+
+  visitChildren(node: RuleNode): es.FunctionDeclaration {
+    return node.getChild(0).accept(this)
+  }
+
+  visitTerminal(node: TerminalNode): es.FunctionDeclaration {
+    return node.accept(this)
+  }
+
+  visitErrorNode(node: ErrorNode): es.FunctionDeclaration {
     throw new FatalSyntaxError(
       {
         start: {
@@ -669,6 +735,24 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
         value: ctx.text,
         raw: ctx.text
       }
+    }
+  }
+
+  visitParameterDeclaration(ctx: ParameterDeclarationContext): es.Expression {
+    const type: es.Identifier = {
+      type: "Identifier",
+      name: ctx.typeSpecifier().text
+    }
+    const declarator: es.Identifier = {
+      type: "Identifier",
+      name: ctx.declarator()?.text != undefined ? ctx.declarator()!.text : ""
+    }
+    return {
+      type: "MemberExpression",
+      object: declarator,
+      property: type,
+      computed: false,
+      optional: false
     }
   }
 
