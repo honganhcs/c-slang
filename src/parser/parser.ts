@@ -694,9 +694,29 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
   }
 
   visitPostfixExpression(ctx: PostfixExpressionContext): es.Expression {
-    // TODO: add support for other cases
     if (ctx.primaryExpression()) {
       return this.visitPrimaryExpression(ctx.primaryExpression()!)
+    } else if (ctx.LeftBracket()) {
+      return {
+        type: 'MemberExpression',
+        object: this.visitPostfixExpression(ctx.postfixExpression()!),
+        property: this.visitExpression(ctx.expression()!),
+        computed: false,
+        optional: false
+      }
+    } else if (ctx.LeftParen()) {
+      const args: Array<es.Expression | es.SpreadElement> = []
+      let head = ctx.argumentExpressionList()
+      while (head) {
+        args.push(this.visitAssignmentExpression(head.assignmentExpression()))
+        head = head.argumentExpressionList()
+      }
+      return {
+        type: 'CallExpression',
+        callee: this.visitPostfixExpression(ctx.postfixExpression()!),
+        arguments: args,
+        optional: false
+      }
     } else {
       const op = ctx.PlusPlus() ? '++' : '--'
       return {
