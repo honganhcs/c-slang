@@ -3,7 +3,10 @@ import * as es from 'estree'
 
 import { extendCurrentEnvironment, lookupFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
-import { evaluateVariableDeclaration } from '../evaluators/declarations'
+import {
+  evaluateFunctionDeclaration,
+  evaluateVariableDeclaration
+} from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
   evaluateConditionalExpression,
@@ -107,14 +110,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     throw new Error(`not supported yet: ${node.type}`)
   },
 
-  FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
-  },
-
-  ArrowFunctionExpression: function* (node: es.ArrowFunctionExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
-  },
-
   Identifier: function* (node: es.Identifier, context: Context) {
     const name = node.name
     const frame = lookupFrame(context, name)
@@ -193,7 +188,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield evaluateFunctionDeclaration(node, context)
   },
 
   IfStatement: function* (node: es.IfStatement, context: Context) {

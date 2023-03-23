@@ -1,4 +1,4 @@
-import { AssignmentOperator, Identifier, SequenceExpression, UpdateOperator } from 'estree'
+import { AssignmentOperator, SequenceExpression, UpdateOperator } from 'estree'
 
 import { lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'

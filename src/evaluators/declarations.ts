@@ -1,6 +1,6 @@
-import { Expression, Identifier, VariableDeclaration, VariableDeclarator } from 'estree'
+import { Expression, FunctionDeclaration, Identifier, VariableDeclaration, VariableDeclarator } from 'estree'
 
-import { getCurrentFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue } from '../interpreter/interpreter'
 import { actual } from '../utils/astMaps'
 
@@ -22,4 +22,14 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, kind: any, contex
   const id = node.id as Identifier
   updateFrame(frame, id.name, kind, init)
   return init
+}
+
+export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: any) {
+  const frame = getGlobalFrame(context)
+  const id = node.id as Identifier
+  const props = node.params
+  const ret = (props[0] as Identifier).name
+  const params = props.slice(1)
+  updateFrame(frame, id.name, ret, params)
+  return undefined
 }
