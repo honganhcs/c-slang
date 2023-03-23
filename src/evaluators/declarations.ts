@@ -1,4 +1,10 @@
-import { Expression, FunctionDeclaration, Identifier, VariableDeclaration, VariableDeclarator } from 'estree'
+import {
+  Expression,
+  FunctionDeclaration,
+  Identifier,
+  VariableDeclaration,
+  VariableDeclarator
+} from 'estree'
 
 import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue } from '../interpreter/interpreter'
