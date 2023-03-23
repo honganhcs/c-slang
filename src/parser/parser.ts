@@ -247,21 +247,23 @@ class DeclarationGenerator implements CVisitor<es.VariableDeclaration> {
 class FunctionDefinitionGenerator implements CVisitor<es.FunctionDeclaration> {
   visitFunctionDefinition(ctx: FunctionDefinitionContext): es.FunctionDeclaration {
     const returnType: es.Identifier = {
-      type: "Identifier",
+      type: 'Identifier',
       name: ctx.typeSpecifier().text
     }
     // TODO: handle function pointers
     const name = ctx.declarator().directDeclarator().directDeclarator()!.Identifier()!.text
     const functionName: es.Identifier = {
-      type: "Identifier",
+      type: 'Identifier',
       name: name
     }
     const params = ctx.declarator().directDeclarator().parameterTypeList()!.parameterList()
     const expressionGenerator = new ExpressionGenerator()
     const paramsList: Array<es.Pattern> = []
     let head: ParameterListContext | undefined = params
-    while(head) {
-      paramsList.push(head.parameterDeclaration().accept(expressionGenerator) as es.MemberExpression)
+    while (head) {
+      paramsList.push(
+        head.parameterDeclaration().accept(expressionGenerator) as es.MemberExpression
+      )
       head = head.parameterList()
     }
     paramsList.push(returnType)
@@ -269,7 +271,7 @@ class FunctionDefinitionGenerator implements CVisitor<es.FunctionDeclaration> {
     const statementGenerator = new StatementGenerator()
     const bodyBlock = ctx.compoundStatement().accept(statementGenerator) as es.BlockStatement
     return {
-      type: "FunctionDeclaration",
+      type: 'FunctionDeclaration',
       id: functionName,
       params: paramsList,
       body: bodyBlock
@@ -740,15 +742,15 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
 
   visitParameterDeclaration(ctx: ParameterDeclarationContext): es.Expression {
     const type: es.Identifier = {
-      type: "Identifier",
+      type: 'Identifier',
       name: ctx.typeSpecifier().text
     }
     const declarator: es.Identifier = {
-      type: "Identifier",
-      name: ctx.declarator()?.text != undefined ? ctx.declarator()!.text : ""
+      type: 'Identifier',
+      name: ctx.declarator()?.text != undefined ? ctx.declarator()!.text : ''
     }
     return {
-      type: "MemberExpression",
+      type: 'MemberExpression',
       object: declarator,
       property: type,
       computed: false,
