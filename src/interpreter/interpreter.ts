@@ -72,8 +72,13 @@ function* leave(context: Context) {
   yield context
 }
 
-const popEnvironment = (context: Context) => context.runtime.environments.shift()
-export const pushEnvironment = (context: Context, environment: Environment) => {
+const peekEnvironment = (context: Context) => context.runtime.environments[0]
+const popEnvironment = (context: Context, id?: string) => {
+  if (!id || context.runtime.environments[0].id === id) {
+    context.runtime.environments.shift()
+  }
+}
+const pushEnvironment = (context: Context, environment: Environment) => {
   context.runtime.environments.unshift(environment)
   context.runtime.environmentTree.insert(environment)
 }
@@ -155,18 +160,27 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ContinueStatement: function* (_node: es.ContinueStatement, _context: Context) {
-    throw new Error(`not supported yet: ${_node.type}`)
+    while (peekEnvironment(_context).name === 'default') {
+      popEnvironment(_context)
+    }
+    _context.prelude = 'continue'
   },
 
   BreakStatement: function* (_node: es.BreakStatement, _context: Context) {
-    throw new Error(`not supported yet: ${_node.type}`)
+    while (peekEnvironment(_context).name === 'default') {
+      popEnvironment(_context)
+    }
+    popEnvironment(_context)
+    _context.prelude = 'break'
   },
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
-    const env = extendCurrentEnvironment(context)
+    const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
+    context.prelude = 'loop'
     const result = yield* evaluateForStatement(node, context)
-    popEnvironment(context)
+    context.prelude = null
+    popEnvironment(context, env.id)
     return result
   },
 
@@ -196,18 +210,24 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
-    return yield* evaluateWhileStatement(node, context)
+    context.prelude = 'loop'
+    const result = yield* evaluateWhileStatement(node, context)
+    context.prelude = null
+    return result
   },
   
   DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
-    return yield* evaluateDoWhileStatement(node, context)
+    context.prelude = 'loop'
+    const result = yield* evaluateDoWhileStatement(node, context)
+    context.prelude = null
+    return result
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
-    const env = extendCurrentEnvironment(context)
+    const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
     const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
-    popEnvironment(context)
+    popEnvironment(context, env.id)
     return result
   },
 

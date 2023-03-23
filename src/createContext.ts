@@ -87,12 +87,12 @@ export const createGlobalEnvironment = (): Environment => ({
   id: '-1'
 })
 
-export const extendCurrentEnvironment = (context: Context): Environment => ({
+export const extendCurrentEnvironment = (context: Context, name: string | null): Environment => ({
   // TODO: refactor name and id
   tail: context.runtime.environments[0],
-  name: 'local',
+  name: name ? name : 'default',
   head: {},
-  id: '0'
+  id: Math.random().toString()
 })
 
 export const getCurrentFrame = (context: Context): Frame => {
