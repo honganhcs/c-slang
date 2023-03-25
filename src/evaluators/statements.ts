@@ -6,12 +6,18 @@ export function* evaluateBlockSatement(node: BlockStatement | Program, context: 
   let result
   for (const statement of node.body) {
     result = yield* evaluate(statement, context)
+    if (context.prelude === 'continue' || context.prelude === 'break') {
+      return result
+    }
   }
   return result
 }
 
 export function* evaluateIfStatement(test: any, consequent: any, alternate: any, context: any) {
-  return test ? yield* actualValue(consequent, context) : yield* actualValue(alternate, context)
+  return (
+    (test && (yield* actualValue(consequent, context))) ||
+    (alternate && (yield* actualValue(alternate, context)))
+  )
 }
 
 export function* evaluateForStatement(node: ForStatement, context: any) {
@@ -22,6 +28,14 @@ export function* evaluateForStatement(node: ForStatement, context: any) {
     node.update && (result = yield* actualValue(node.update, context))
   ) {
     result = yield* evaluate(node.body, context)
+
+    if (context.prelude === 'continue') {
+      context.prelude = null
+      continue
+    } else if (context.prelude === 'break') {
+      context.prelude = null
+      break
+    }
   }
   return result
 }
@@ -30,6 +44,14 @@ export function* evaluateWhileStatement(node: WhileStatement, context: any) {
   let result
   while ((result = yield* actualValue(node.test, context))) {
     result = yield* evaluate(node.body, context)
+
+    if (context.prelude === 'continue') {
+      context.prelude = null
+      continue
+    } else if (context.prelude === 'break') {
+      context.prelude = null
+      break
+    }
   }
   return result
 }
@@ -38,6 +60,14 @@ export function* evaluateDoWhileStatement(node: DoWhileStatement, context: any) 
   let result
   do {
     result = yield* evaluate(node.body, context)
+
+    if (context.prelude === 'continue') {
+      context.prelude = null
+      continue
+    } else if (context.prelude === 'break') {
+      context.prelude = null
+      break
+    }
   } while ((result = yield* actualValue(node.test, context)))
   return result
 }

@@ -3,7 +3,10 @@ import * as es from 'estree'
 
 import { extendCurrentEnvironment, lookupFrame } from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
-import { evaluateVariableDeclaration } from '../evaluators/declarations'
+import {
+  evaluateFunctionDeclaration,
+  evaluateVariableDeclaration
+} from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
   evaluateConditionalExpression,
@@ -23,7 +26,6 @@ import {
   evaluateWhileStatement
 } from '../evaluators/statements'
 import { Context, Environment, Value } from '../types'
-import * as rttc from '../utils/rttc'
 
 class Thunk {
   public value: Value
@@ -72,8 +74,13 @@ function* leave(context: Context) {
   yield context
 }
 
-const popEnvironment = (context: Context) => context.runtime.environments.shift()
-export const pushEnvironment = (context: Context, environment: Environment) => {
+const peekEnvironment = (context: Context) => context.runtime.environments[0]
+const popEnvironment = (context: Context, id?: string) => {
+  if (!id || context.runtime.environments[0].id === id) {
+    context.runtime.environments.shift()
+  }
+}
+const pushEnvironment = (context: Context, environment: Environment) => {
   context.runtime.environments.unshift(environment)
   context.runtime.environmentTree.insert(environment)
 }
@@ -102,14 +109,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     throw new Error(`not supported yet: ${node.type}`)
   },
 
-  FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
-  },
-
-  ArrowFunctionExpression: function* (node: es.ArrowFunctionExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
-  },
-
   Identifier: function* (node: es.Identifier, context: Context) {
     const name = node.name
     const frame = lookupFrame(context, name)
@@ -130,7 +129,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
     const value = yield* actualValue(node.argument, context)
-    const error = rttc.checkUnaryExpression(node, node.operator, value)
     return evaluateUnaryExpression(node.operator, value)
   },
 
@@ -155,18 +153,27 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ContinueStatement: function* (_node: es.ContinueStatement, _context: Context) {
-    throw new Error(`not supported yet: ${_node.type}`)
+    while (peekEnvironment(_context).name === 'default') {
+      popEnvironment(_context)
+    }
+    _context.prelude = 'continue'
   },
 
   BreakStatement: function* (_node: es.BreakStatement, _context: Context) {
-    throw new Error(`not supported yet: ${_node.type}`)
+    while (peekEnvironment(_context).name === 'default') {
+      popEnvironment(_context)
+    }
+    popEnvironment(_context)
+    _context.prelude = 'break'
   },
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
-    const env = extendCurrentEnvironment(context)
+    context.prelude = 'for'
+    const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
     const result = yield* evaluateForStatement(node, context)
-    popEnvironment(context)
+    popEnvironment(context, env.id)
+    context.prelude = null
     return result
   },
 
@@ -179,7 +186,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield evaluateFunctionDeclaration(node, context)
   },
 
   IfStatement: function* (node: es.IfStatement, context: Context) {
@@ -196,18 +203,24 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
-    return yield* evaluateWhileStatement(node, context)
+    context.prelude = 'while'
+    const result = yield* evaluateWhileStatement(node, context)
+    context.prelude = null
+    return result
   },
   
   DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
-    return yield* evaluateDoWhileStatement(node, context)
+    context.prelude = 'do-while'
+    const result = yield* evaluateDoWhileStatement(node, context)
+    context.prelude = null
+    return result
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
-    const env = extendCurrentEnvironment(context)
+    const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
     const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
-    popEnvironment(context)
+    popEnvironment(context, env.id)
     return result
   },
 
