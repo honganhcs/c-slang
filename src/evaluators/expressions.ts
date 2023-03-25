@@ -1,7 +1,32 @@
-import { AssignmentOperator, SequenceExpression, UpdateOperator } from 'estree'
+import {
+  AssignmentOperator,
+  BlockStatement,
+  MemberExpression,
+  SequenceExpression,
+  UpdateOperator
+} from 'estree'
 
-import { lookupFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
+
+export function* evaluateCallExpression(func: any, args: any, context: any) {
+  // TODO: handle non-identifier and type-cast
+  const global = lookupFrame(context, func)
+  if (global) {
+    const id = global[func]
+    const value = id.value
+    const ret = id.kind
+    const params = value.params
+    const body = value.body as BlockStatement
+    const frame = getCurrentFrame(context)
+    for (const i in params) {
+      const param = params[i] as MemberExpression
+      const arg = args[i]
+      updateFrame(frame, param.object, param.property, arg)
+    }
+    return yield* evaluate(body, context)
+  }
+}
 
 export function* evaluateSequenceExpression(node: SequenceExpression, context: any) {
   let result

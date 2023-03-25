@@ -9,6 +9,7 @@ import {
 } from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
+  evaluateCallExpression,
   evaluateConditionalExpression,
   evaluateSequenceExpression,
   evaluateUpdateExpression
@@ -119,7 +120,19 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const callee = node.callee as es.Identifier
+    const func = yield* actualValue(callee, context)
+    const args = []
+    for (const arg of node.arguments) {
+      args.unshift(yield* actualValue(arg, context))
+    }
+    context.prelude = 'function'
+    const env = extendCurrentEnvironment(context, context.prelude)
+    pushEnvironment(context, env)
+    const result = yield* evaluateCallExpression(func, args, context)
+    popEnvironment(context, env.id)
+    context.prelude = null
+    return result
   },
 
   SequenceExpression: function* (node: es.SequenceExpression, context: Context) {
