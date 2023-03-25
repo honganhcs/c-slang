@@ -16,7 +16,7 @@ export function* evaluateCallExpression(callee: Identifier, args: any, context: 
   const value = yield* actualValue(callee, context)
   const global = lookupFrame(context, func)
   if (global) {
-    const ret = global[func].kind
+    const kind = global[func].kind
     const params = value.params
     const body = value.body as BlockStatement
     const frame = getCurrentFrame(context)
@@ -25,7 +25,10 @@ export function* evaluateCallExpression(callee: Identifier, args: any, context: 
       const arg = args[i]
       updateFrame(frame, param.object, param.property, arg)
     }
-    return yield* evaluate(body, context)
+
+    // TODO: type-cast result to kind
+    const result = yield* evaluate(body, context)
+    return result 
   }
 }
 

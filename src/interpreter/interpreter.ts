@@ -24,6 +24,7 @@ import {
   evaluateDoWhileStatement,
   evaluateForStatement,
   evaluateIfStatement,
+  evaluateReturnStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
 import { Context, Environment, Value } from '../types'
@@ -212,7 +213,11 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const result = yield* evaluateReturnStatement(node, context)
+    while (peekEnvironment(context).name === 'function') {
+      popEnvironment(context)
+    }
+    return result
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
