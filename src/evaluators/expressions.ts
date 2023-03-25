@@ -20,14 +20,20 @@ export function* evaluateCallExpression(callee: Identifier, args: any, context: 
     const params = value.params
     const body = value.body as BlockStatement
     const frame = getCurrentFrame(context)
-    for (const i in params) {
-      const param = params[i] as MemberExpression
-      const arg = args[i]
-      updateFrame(frame, param.object, param.property, arg)
+    for (const p of params) {
+      const param = {
+        name: (p.object as Identifier).name,
+        kind: (p.property as Identifier).name
+      }
+      const arg = args.shift()
+      updateFrame(frame, param.name, param.kind, arg)
     }
 
     // TODO: type-cast result to kind
     const result = yield* evaluate(body, context)
+    if (context.prelude === 'return') {
+      context.prelude = null
+    }
     return result
   }
 }
