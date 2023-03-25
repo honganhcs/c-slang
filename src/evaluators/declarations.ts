@@ -36,6 +36,11 @@ export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: 
   const props = node.params
   const ret = (props[0] as Identifier).name
   const params = props.slice(1)
-  updateFrame(frame, id.name, ret, params)
+  const body = node.body
+  const value = {
+    params: params,
+    body: body
+  }
+  updateFrame(frame, id.name, ret, value)
   return undefined
 }
