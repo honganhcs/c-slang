@@ -121,7 +121,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
     const callee = node.callee as es.Identifier
-    const func = yield* actualValue(callee, context)
     const args = []
     for (const arg of node.arguments) {
       args.unshift(yield* actualValue(arg, context))
@@ -130,7 +129,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     context.prelude = 'function'
     const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
-    const result = yield* evaluateCallExpression(func, args, context)
+    const result = yield* evaluateCallExpression(callee, args, context)
     popEnvironment(context, env.id)
     context.prelude = null
     return result

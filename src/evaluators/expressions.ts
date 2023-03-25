@@ -1,6 +1,7 @@
 import {
   AssignmentOperator,
   BlockStatement,
+  Identifier,
   MemberExpression,
   SequenceExpression,
   UpdateOperator
@@ -9,13 +10,13 @@ import {
 import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
-export function* evaluateCallExpression(func: any, args: any, context: any) {
-  // TODO: handle non-identifier and type-cast
+export function* evaluateCallExpression(callee: Identifier, args: any, context: any) {
+  // TODO: handle non-identifier
+  const func = callee.name
+  const value = yield* actualValue(callee, context)
   const global = lookupFrame(context, func)
   if (global) {
-    const id = global[func]
-    const value = id.value
-    const ret = id.kind
+    const ret = global[func].kind
     const params = value.params
     const body = value.body as BlockStatement
     const frame = getCurrentFrame(context)
