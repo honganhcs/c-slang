@@ -214,9 +214,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
     const result = yield* evaluateReturnStatement(node, context)
-    while (peekEnvironment(context).name === 'function') {
+    while (peekEnvironment(context).name !== 'function') {
       popEnvironment(context)
     }
+    context.prelude = 'return'
     return result
   },
 
