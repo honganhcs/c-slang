@@ -126,6 +126,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     for (const arg of node.arguments) {
       args.unshift(yield* actualValue(arg, context))
     }
+    
     context.prelude = 'function'
     const env = extendCurrentEnvironment(context, context.prelude)
     pushEnvironment(context, env)
