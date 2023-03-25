@@ -200,7 +200,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
-    return yield evaluateFunctionDeclaration(node, context)
+    // TODO: handle when function is defined but not declared
+    return node.id?.name === 'main'
+      ? yield* evaluate(node.body, context)
+      : yield evaluateFunctionDeclaration(node, context)
   },
 
   IfStatement: function* (node: es.IfStatement, context: Context) {
