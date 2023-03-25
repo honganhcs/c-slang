@@ -1,4 +1,11 @@
-import { BlockStatement, DoWhileStatement, ForStatement, Program, ReturnStatement, WhileStatement } from 'estree'
+import {
+  BlockStatement,
+  DoWhileStatement,
+  ForStatement,
+  Program,
+  ReturnStatement,
+  WhileStatement
+} from 'estree'
 
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
@@ -6,7 +13,12 @@ export function* evaluateBlockSatement(node: BlockStatement | Program, context: 
   let result
   for (const statement of node.body) {
     result = yield* evaluate(statement, context)
-    if (context.prelude === 'continue' || context.prelude === 'break' || context.prelude === 'return') {
+    
+    if (
+      context.prelude === 'continue' ||
+      context.prelude === 'break' ||
+      context.prelude === 'return'
+    ) {
       return result
     }
   }

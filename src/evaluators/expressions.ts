@@ -28,7 +28,7 @@ export function* evaluateCallExpression(callee: Identifier, args: any, context: 
 
     // TODO: type-cast result to kind
     const result = yield* evaluate(body, context)
-    return result 
+    return result
   }
 }
 
