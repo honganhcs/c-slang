@@ -26,7 +26,6 @@ import {
   evaluateWhileStatement
 } from '../evaluators/statements'
 import { Context, Environment, Value } from '../types'
-import * as rttc from '../utils/rttc'
 
 class Thunk {
   public value: Value
@@ -130,7 +129,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
     const value = yield* actualValue(node.argument, context)
-    const error = rttc.checkUnaryExpression(node, node.operator, value)
     return evaluateUnaryExpression(node.operator, value)
   },
 
