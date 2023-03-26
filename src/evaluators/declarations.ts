@@ -34,8 +34,13 @@ export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: 
   const frame = getGlobalFrame(context)
   const id = node.id as Identifier
   const props = node.params
-  const ret = (props[0] as Identifier).name
+  const kind = (props[0] as Identifier).name
   const params = props.slice(1)
-  updateFrame(frame, id.name, ret, params)
+  const body = node.body
+  const value = {
+    params: params,
+    body: body
+  }
+  updateFrame(frame, id.name, kind, value)
   return undefined
 }

@@ -101,9 +101,9 @@ export const getCurrentFrame = (context: Context): Frame => {
 }
 
 export const getGlobalFrame = (context: Context): Frame => {
-  const last = context.runtime.environments.length
-  const env = context.runtime.environments[last]
-  return env?.head
+  const environments = context.runtime.environments
+  const global = environments.find(env => env.name === 'global')
+  return global ? global.head : {}
 }
 
 export const lookupFrame = (context: Context, name: string) => {

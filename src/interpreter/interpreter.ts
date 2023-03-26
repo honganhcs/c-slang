@@ -9,6 +9,7 @@ import {
 } from '../evaluators/declarations'
 import {
   evaluateAssignmentExpression,
+  evaluateCallExpression,
   evaluateConditionalExpression,
   evaluateSequenceExpression,
   evaluateUpdateExpression
@@ -23,6 +24,7 @@ import {
   evaluateDoWhileStatement,
   evaluateForStatement,
   evaluateIfStatement,
+  evaluateReturnStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
 import { Context, Environment, Value } from '../types'
@@ -119,7 +121,19 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const callee = node.callee as es.Identifier
+    const args = []
+    for (const arg of node.arguments) {
+      args.unshift(yield* actualValue(arg, context))
+    }
+    
+    context.prelude = 'function'
+    const env = extendCurrentEnvironment(context, context.prelude)
+    pushEnvironment(context, env)
+    const result = yield* evaluateCallExpression(callee, args, context)
+    popEnvironment(context, env.id)
+    context.prelude = null
+    return result
   },
 
   SequenceExpression: function* (node: es.SequenceExpression, context: Context) {
@@ -186,7 +200,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
-    return yield evaluateFunctionDeclaration(node, context)
+    // TODO: handle when function is defined but not declared
+    return node.id?.name === 'main'
+      ? yield* evaluate(node.body, context)
+      : yield evaluateFunctionDeclaration(node, context)
   },
 
   IfStatement: function* (node: es.IfStatement, context: Context) {
@@ -199,7 +216,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    const result = yield* evaluateReturnStatement(node, context)
+    while (peekEnvironment(context).name !== 'function') {
+      popEnvironment(context)
+    }
+    context.prelude = 'return'
+    return result
   },
 
   WhileStatement: function* (node: es.WhileStatement, context: Context) {
