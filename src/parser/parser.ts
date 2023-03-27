@@ -333,17 +333,73 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
   }
 
   visitDeclarator(ctx: DeclaratorContext): es.VariableDeclarator {
-    // TODO: add support for pointer
-    return this.visitDirectDeclarator(ctx.directDeclarator())
+    const directDeclarator = this.visitDirectDeclarator(ctx.directDeclarator())
+    if (ctx.pointer()) {
+      const numPointers = ctx.pointer()!.Star().length
+      const pointerField = (directDeclarator.id as es.MemberExpression).property as es.Literal
+      pointerField.value = numPointers
+    }
+    return directDeclarator
   }
 
   visitDirectDeclarator(ctx: DirectDeclaratorContext): es.VariableDeclarator {
-    // TODO: add support for array, function declarations, recursive def
+    const name: es.Identifier = {
+      type: 'Identifier',
+      name: ctx.Identifier().text
+    }
+    let obj: es.Expression
+    if (ctx.arrayDimension()) {
+      // array
+      const elements: Array<es.Expression | es.SpreadElement | null> = [name]
+      const dims = ctx.arrayDimension()
+      dims.forEach(dim => {
+        if (dim.constantExpression()) {
+          const expressionGenerator = new ExpressionGenerator()
+          elements.push(dim.constantExpression()!.accept(expressionGenerator))
+        } else {
+          elements.push(null)
+        }
+      })
+      obj = {
+        type: 'ArrayExpression',
+        elements: elements
+      }
+    } else if (ctx.LeftParen()) {
+      // function
+      const params = ctx.parameterTypeList()?.parameterList()
+      const expressionGenerator = new ExpressionGenerator()
+      const paramsList: Array<es.Pattern> = []
+      let head: ParameterListContext | undefined = params
+      while (head) {
+        paramsList.push(
+          head.parameterDeclaration().accept(expressionGenerator) as es.MemberExpression
+        )
+        head = head.parameterList()
+      }
+      paramsList.reverse()
+      obj = {
+        type: 'FunctionExpression',
+        id: name,
+        params: paramsList,
+        body: {
+          type: 'BlockStatement',
+          body: []
+        }
+      }
+    } else {
+      obj = name
+    }
     return {
       type: 'VariableDeclarator',
       id: {
-        type: 'Identifier',
-        name: ctx.Identifier()!.text
+        type: 'MemberExpression',
+        object: obj,
+        property: {
+          type: 'Literal',
+          value: 0
+        },
+        computed: false,
+        optional: true
       }
     }
   }
