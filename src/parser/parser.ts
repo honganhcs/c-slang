@@ -246,17 +246,30 @@ class DeclarationGenerator implements CVisitor<es.VariableDeclaration> {
 
 class FunctionDefinitionGenerator implements CVisitor<es.FunctionDeclaration> {
   visitFunctionDefinition(ctx: FunctionDefinitionContext): es.FunctionDeclaration {
-    const returnType: es.Identifier = {
-      type: 'Identifier',
-      name: ctx.typeSpecifier().text
+    let numPointers = 0
+    if (ctx.pointer()) {
+      numPointers = ctx.pointer()!.Star().length
     }
-    // TODO: handle function pointers
-    const name = ctx.declarator().directDeclarator().directDeclarator()!.Identifier()!.text
+    const returnType: es.MemberExpression = {
+      type: 'MemberExpression',
+      object: {
+        type: 'Literal',
+        value: null
+      },
+      property: {
+        type: 'Literal',
+        bigint: ctx.typeSpecifier().text,
+        value: numPointers
+      },
+      computed: false,
+      optional: false
+    }
+    const name = ctx.Identifier()!.text
     const functionName: es.Identifier = {
       type: 'Identifier',
       name: name
     }
-    const params = ctx.declarator().directDeclarator().parameterTypeList()!.parameterList()
+    const params = ctx.parameterTypeList()?.parameterList()
     const expressionGenerator = new ExpressionGenerator()
     const paramsList: Array<es.Pattern> = []
     let head: ParameterListContext | undefined = params
