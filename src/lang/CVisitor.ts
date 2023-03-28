@@ -25,6 +25,7 @@ import { InitDeclaratorContext } from './CParser'
 import { TypeSpecifierContext } from './CParser'
 import { DeclaratorContext } from './CParser'
 import { DirectDeclaratorContext } from './CParser'
+import { ArrayDimensionContext } from './CParser'
 import { PointerContext } from './CParser'
 import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
@@ -216,6 +217,13 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitDirectDeclarator?: (ctx: DirectDeclaratorContext) => Result
+
+  /**
+   * Visit a parse tree produced by `CParser.arrayDimension`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitArrayDimension?: (ctx: ArrayDimensionContext) => Result
 
   /**
    * Visit a parse tree produced by `CParser.pointer`.

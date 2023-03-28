@@ -39,6 +39,7 @@ import {
   RelationalExpressionContext,
   SelectionStatementContext,
   StatementContext,
+  TypeNameContext,
   UnaryExpressionContext
 } from '../lang/CParser'
 import { CVisitor } from '../lang/CVisitor'
@@ -246,17 +247,30 @@ class DeclarationGenerator implements CVisitor<es.VariableDeclaration> {
 
 class FunctionDefinitionGenerator implements CVisitor<es.FunctionDeclaration> {
   visitFunctionDefinition(ctx: FunctionDefinitionContext): es.FunctionDeclaration {
-    const returnType: es.Identifier = {
-      type: 'Identifier',
-      name: ctx.typeSpecifier().text
+    let numPointers = 0
+    if (ctx.pointer()) {
+      numPointers = ctx.pointer()!.Star().length
     }
-    // TODO: handle function pointers
-    const name = ctx.declarator().directDeclarator().directDeclarator()!.Identifier()!.text
+    const returnType: es.MemberExpression = {
+      type: 'MemberExpression',
+      object: {
+        type: 'Literal',
+        value: null
+      },
+      property: {
+        type: 'Literal',
+        bigint: ctx.typeSpecifier().text,
+        value: numPointers
+      },
+      computed: false,
+      optional: false
+    }
+    const name = ctx.Identifier()!.text
     const functionName: es.Identifier = {
       type: 'Identifier',
       name: name
     }
-    const params = ctx.declarator().directDeclarator().parameterTypeList()!.parameterList()
+    const params = ctx.parameterTypeList()?.parameterList()
     const expressionGenerator = new ExpressionGenerator()
     const paramsList: Array<es.Pattern> = []
     let head: ParameterListContext | undefined = params
@@ -320,17 +334,73 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
   }
 
   visitDeclarator(ctx: DeclaratorContext): es.VariableDeclarator {
-    // TODO: add support for pointer
-    return this.visitDirectDeclarator(ctx.directDeclarator())
+    const directDeclarator = this.visitDirectDeclarator(ctx.directDeclarator())
+    if (ctx.pointer()) {
+      const numPointers = ctx.pointer()!.Star().length
+      const pointerField = (directDeclarator.id as es.MemberExpression).property as es.Literal
+      pointerField.value = numPointers
+    }
+    return directDeclarator
   }
 
   visitDirectDeclarator(ctx: DirectDeclaratorContext): es.VariableDeclarator {
-    // TODO: add support for array, function declarations, recursive def
+    const name: es.Identifier = {
+      type: 'Identifier',
+      name: ctx.Identifier().text
+    }
+    let obj: es.Expression
+    if (ctx.arrayDimension()) {
+      // array
+      const elements: Array<es.Expression | es.SpreadElement | null> = [name]
+      const dims = ctx.arrayDimension()
+      dims.forEach(dim => {
+        if (dim.constantExpression()) {
+          const expressionGenerator = new ExpressionGenerator()
+          elements.push(dim.constantExpression()!.accept(expressionGenerator))
+        } else {
+          elements.push(null)
+        }
+      })
+      obj = {
+        type: 'ArrayExpression',
+        elements: elements
+      }
+    } else if (ctx.LeftParen()) {
+      // function
+      const params = ctx.parameterTypeList()?.parameterList()
+      const expressionGenerator = new ExpressionGenerator()
+      const paramsList: Array<es.Pattern> = []
+      let head: ParameterListContext | undefined = params
+      while (head) {
+        paramsList.push(
+          head.parameterDeclaration().accept(expressionGenerator) as es.MemberExpression
+        )
+        head = head.parameterList()
+      }
+      paramsList.reverse()
+      obj = {
+        type: 'FunctionExpression',
+        id: name,
+        params: paramsList,
+        body: {
+          type: 'BlockStatement',
+          body: []
+        }
+      }
+    } else {
+      obj = name
+    }
     return {
       type: 'VariableDeclarator',
       id: {
-        type: 'Identifier',
-        name: ctx.Identifier()!.text
+        type: 'MemberExpression',
+        object: obj,
+        property: {
+          type: 'Literal',
+          value: 0
+        },
+        computed: false,
+        optional: true
       }
     }
   }
@@ -544,8 +614,8 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
       const lhs = ctx.unaryExpression()!
       const rhs = ctx.assignmentExpression()!
       if (lhs.postfixExpression() || lhs.castExpression()) {
-        // TODO handle other cases for LHS
-        const lhsExpr = this.visitUnaryExpression(lhs) as es.Identifier
+        // LHS can only be a variable name or array access
+        const lhsExpr = this.visitUnaryExpression(lhs) as es.Identifier | es.MemberExpression
         const rhsExpr = this.visitAssignmentExpression(rhs)
         return {
           type: 'AssignmentExpression',
@@ -666,8 +736,29 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
   }
 
   visitCastExpression(ctx: CastExpressionContext): es.Expression {
-    // TODO: add support for type casting
-    return this.visitUnaryExpression(ctx.unaryExpression()!)
+    if (ctx.unaryExpression()) {
+      return this.visitUnaryExpression(ctx.unaryExpression()!)
+    } else {
+      return {
+        type: 'MemberExpression',
+        object: this.visitCastExpression(ctx.castExpression()!),
+        property: this.visitTypeName(ctx.typeName()!),
+        computed: false, // set to false for cast expression
+        optional: false
+      }
+    }
+  }
+
+  visitTypeName(ctx: TypeNameContext): es.Expression {
+    let numPointers = 0
+    if (ctx.pointer()) {
+      numPointers = ctx.pointer()!.Star().length
+    }
+    return {
+      type: 'Literal',
+      value: numPointers,
+      bigint: ctx.typeSpecifier().text
+    }
   }
 
   visitUnaryExpression(ctx: UnaryExpressionContext): es.Expression {
@@ -701,7 +792,7 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
         type: 'MemberExpression',
         object: this.visitPostfixExpression(ctx.postfixExpression()!),
         property: this.visitExpression(ctx.expression()!),
-        computed: false,
+        computed: true, // set to true for array access
         optional: false
       }
     } else if (ctx.LeftParen()) {
@@ -761,6 +852,7 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
   }
 
   visitParameterDeclaration(ctx: ParameterDeclarationContext): es.Expression {
+    // TODO handle pointer, array, function types
     const type: es.Identifier = {
       type: 'Identifier',
       name: ctx.typeSpecifier().text

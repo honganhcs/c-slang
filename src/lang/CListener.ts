@@ -25,6 +25,7 @@ import { InitDeclaratorContext } from './CParser'
 import { TypeSpecifierContext } from './CParser'
 import { DeclaratorContext } from './CParser'
 import { DirectDeclaratorContext } from './CParser'
+import { ArrayDimensionContext } from './CParser'
 import { PointerContext } from './CParser'
 import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
@@ -305,6 +306,17 @@ export interface CListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitDirectDeclarator?: (ctx: DirectDeclaratorContext) => void
+
+  /**
+   * Enter a parse tree produced by `CParser.arrayDimension`.
+   * @param ctx the parse tree
+   */
+  enterArrayDimension?: (ctx: ArrayDimensionContext) => void
+  /**
+   * Exit a parse tree produced by `CParser.arrayDimension`.
+   * @param ctx the parse tree
+   */
+  exitArrayDimension?: (ctx: ArrayDimensionContext) => void
 
   /**
    * Enter a parse tree produced by `CParser.pointer`.

@@ -122,16 +122,17 @@ declarator
     ;
 
 directDeclarator
-    :   Identifier
-    |   '(' declarator ')'
-    |   directDeclarator '[' constantExpression? ']'
-    |   directDeclarator '(' parameterTypeList ')'
-    |   directDeclarator '(' identifierList? ')' // TODO: decide whether to remove
+    :   Identifier // for variables
+    |   Identifier arrayDimension+ // for arrays
+    |   Identifier '(' parameterTypeList? ')' // for functions
+    ;
+
+arrayDimension 
+    : '[' constantExpression? ']'
     ;
 
 pointer
-    :   '*' 
-    |   '*' pointer
+    :   '*'+ 
     ;
 
 parameterTypeList
@@ -145,8 +146,7 @@ parameterList
 
 parameterDeclaration
     :   typeSpecifier
-    |   typeSpecifier declarator
-    |   typeSpecifier abstractDeclarator
+    |   typeSpecifier declarator // TODO decide whether to add back abstractDeclarator
     ;
 
 identifierList
@@ -155,7 +155,7 @@ identifierList
     ;
 
 typeName
-    :   typeSpecifier abstractDeclarator?
+    :   typeSpecifier pointer?
     ;
 
 abstractDeclarator
@@ -229,7 +229,7 @@ jumpStatement
     ;
 
 functionDefinition
-    :   typeSpecifier declarator compoundStatement
+    :   typeSpecifier pointer? Identifier '(' parameterTypeList? ')' compoundStatement
     ;
 
 programItem
