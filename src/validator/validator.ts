@@ -160,6 +160,14 @@ export function validateFunction(frame: Frame, name: any, kind: any, value: any)
       throw new Error(`redefinition of '${name}'`)
     } else if (obj.value.params.length !== value.params.length) {
       throw new Error(`number of arguments doesn't match prototype`)
+    } else {
+      for (const param of obj.value.params) {
+        const pre = param.property as es.BigIntLiteral
+        const cur = kind as es.BigIntLiteral
+        if (pre.bigint !== cur.bigint || pre.value !== cur.value) {
+          throw new Error(`conflicting types for '${name}'`)
+        }
+      }
     }
   }
 }
