@@ -30,7 +30,7 @@ export function evaluateFunctionExpression(node: FunctionExpression, context: an
 }
 
 export function* evaluateCallExpression(callee: Identifier, args: any, context: any) {
-  // TODO: handle non-identifier
+  // TODO: handle type-cast of arguments and return
   const func = callee.name
   const value = yield* actualValue(callee, context)
   const global = lookupFrame(context, func)
@@ -42,13 +42,12 @@ export function* evaluateCallExpression(callee: Identifier, args: any, context: 
     for (const p of params) {
       const param = {
         name: (p.object as Identifier).name,
-        kind: (p.property as Identifier).name
+        kind: p.property as BigIntLiteral
       }
       const arg = args.shift()
       updateFrame(frame, param.name, param.kind, arg)
     }
 
-    // TODO: type-cast result to kind
     const result = yield* evaluate(body, context)
     if (context.prelude === 'return') {
       context.prelude = null
