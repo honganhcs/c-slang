@@ -151,7 +151,7 @@ export function validateAndAnnotate(
   return program
 }
 
-export function validateFunctionDeclaration(frame: Frame, name: any, kind: any, value: any) {
+export function validateFunction(frame: Frame, name: any, kind: any, value: any) {
   const obj = frame[name]
   if (obj) {
     if (obj.kind !== kind) {
