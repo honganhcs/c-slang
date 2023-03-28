@@ -33,7 +33,7 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, kind: any, contex
 
 export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: any) {
   const id = node.id as Identifier
-  const name = id.name  
+  const name = id.name
   const props = node.params
   const kind = (props[0] as Identifier).name
   const params = props.slice(1)

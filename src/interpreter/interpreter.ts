@@ -120,7 +120,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     const name = node.name
     const frame = lookupFrame(context, name)
     if (!frame) {
-      throw new Error(`cannot find variable ${name}`)
+      throw new Error(`${name} undeclared`)
     }
     return frame[name].value
   },
