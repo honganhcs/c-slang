@@ -88,7 +88,7 @@ export const createGlobalEnvironment = (): Environment => ({
 })
 
 export const extendCurrentEnvironment = (context: Context, name: string | null): Environment => ({
-  // TODO: refactor name and id
+  // TODO: refactor id
   tail: context.runtime.environments[0],
   name: name ? name : 'default',
   head: {},

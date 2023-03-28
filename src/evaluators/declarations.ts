@@ -9,6 +9,7 @@ import {
 import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue } from '../interpreter/interpreter'
 import { actual } from '../utils/astMaps'
+import { validateFunctionDeclaration } from '../validator/validator'
 
 export function* evaluateVariableDeclaration(node: VariableDeclaration, context: any) {
   const kind = actual['kind'](node.kind)
@@ -31,8 +32,8 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, kind: any, contex
 }
 
 export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: any) {
-  const frame = getGlobalFrame(context)
   const id = node.id as Identifier
+  const name = id.name  
   const props = node.params
   const kind = (props[0] as Identifier).name
   const params = props.slice(1)
@@ -41,6 +42,8 @@ export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: 
     params: params,
     body: body
   }
-  updateFrame(frame, id.name, kind, value)
+  const frame = getGlobalFrame(context)
+  validateFunctionDeclaration(frame, name, kind, value)
+  updateFrame(frame, name, kind, value)
   return undefined
 }

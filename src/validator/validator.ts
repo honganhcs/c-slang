@@ -2,7 +2,7 @@ import * as es from 'estree'
 
 import { ConstAssignment } from '../errors/errors'
 import { NoAssignmentToForVariable } from '../errors/validityErrors'
-import { Context, NodeWithInferredType } from '../types'
+import { Context, Frame, NodeWithInferredType } from '../types'
 import { getVariableDecarationName } from '../utils/astCreator'
 import { ancestor, base, FullWalkerCallback } from '../utils/walkers'
 
@@ -149,4 +149,17 @@ export function validateAndAnnotate(
 
    */
   return program
+}
+
+export function validateFunctionDeclaration(frame: Frame, name: any, kind: any, value: any) {
+  const obj = frame[name]
+  if (obj) {
+    if (obj.kind !== kind) {
+      throw new Error(`'${name}' redeclared as different kind of symbol`)
+    } else if (obj.value.body) {
+      throw new Error(`redefinition of '${name}'`)
+    } else if (obj.value.params.length !== value.params.length) {
+      throw new Error(`number of arguments doesn't match prototype`)
+    }
+  }
 }
