@@ -11,6 +11,7 @@ import {
   evaluateAssignmentExpression,
   evaluateCallExpression,
   evaluateConditionalExpression,
+  evaluateFunctionExpression,
   evaluateSequenceExpression,
   evaluateUpdateExpression
 } from '../evaluators/expressions'
@@ -109,6 +110,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
     throw new Error(`not supported yet: ${node.type}`)
+  },
+
+  FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
+    return evaluateFunctionExpression(node, context)
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
