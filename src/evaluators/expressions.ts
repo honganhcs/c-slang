@@ -1,14 +1,33 @@
 import {
   AssignmentOperator,
+  BigIntLiteral,
   BlockStatement,
+  FunctionExpression,
   Identifier,
   MemberExpression,
   SequenceExpression,
   UpdateOperator
 } from 'estree'
 
-import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
+import { validateFunction } from '../validator/validator'
+
+export function evaluateFunctionExpression(node: FunctionExpression, context: any) {
+  const id = node.id as Identifier
+  const name = id.name
+  const props = node.params
+  const kind = (props[0] as MemberExpression).property
+  const params = props.slice(1)
+  const value = {
+    params: params,
+    body: null
+  }
+  const frame = getGlobalFrame(context)
+  validateFunction(frame, name, kind, value)
+  updateFrame(frame, name, kind, value)
+  return undefined
+}
 
 export function* evaluateCallExpression(callee: Identifier, args: any, context: any) {
   // TODO: handle non-identifier
@@ -16,7 +35,7 @@ export function* evaluateCallExpression(callee: Identifier, args: any, context: 
   const value = yield* actualValue(callee, context)
   const global = lookupFrame(context, func)
   if (global) {
-    const kind = global[func].kind
+    const kind = global[func].kind as BigIntLiteral
     const params = value.params
     const body = value.body as BlockStatement
     const frame = getCurrentFrame(context)
