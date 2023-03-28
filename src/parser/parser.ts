@@ -25,6 +25,8 @@ import {
   FunctionDefinitionContext,
   InitDeclaratorContext,
   InitDeclaratorListContext,
+  InitializerContext,
+  InitializerListContext,
   IterationStatementContext,
   JumpStatementContext,
   LogicalAndExpressionContext,
@@ -94,7 +96,7 @@ export class DisallowedConstructError implements SourceError {
 export class FatalSyntaxError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation, public message: string) {}
+  public constructor(public location: es.SourceLocation, public message: string) { }
 
   public explain() {
     return this.message
@@ -108,7 +110,7 @@ export class FatalSyntaxError implements SourceError {
 export class MissingSemicolonError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Missing semicolon at the end of statement'
@@ -122,7 +124,7 @@ export class MissingSemicolonError implements SourceError {
 export class TrailingCommaError implements SourceError {
   public type: ErrorType.SYNTAX
   public severity: ErrorSeverity.WARNING
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Trailing comma'
@@ -339,9 +341,8 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
   visitInitDeclarator(ctx: InitDeclaratorContext): es.VariableDeclarator {
     const decl = this.visitDeclarator(ctx.declarator())
     if (ctx.initializer()) {
-      // TODO: add support for initializerList
       const generator = new ExpressionGenerator()
-      const expr: es.Expression = ctx.initializer()!.assignmentExpression()!.accept(generator)
+      const expr: es.Expression = ctx.initializer()!.accept(generator)
       decl.init = expr
     }
     return decl
@@ -620,6 +621,27 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
         type: 'SequenceExpression',
         expressions: [assignment]
       }
+    }
+  }
+
+  visitInitializer(ctx: InitializerContext): es.Expression {
+    if (ctx.assignmentExpression()) {
+      return this.visitAssignmentExpression(ctx.assignmentExpression()!)
+    } else {
+      return this.visitInitializerList(ctx.initializerList()!)
+    }
+  }
+
+  visitInitializerList(ctx: InitializerListContext): es.Expression {
+    let head: InitializerListContext | undefined = ctx
+    const elements: Array<es.Expression | es.SpreadElement | null> = []
+    while (head) {
+      elements.push(this.visit(head.initializer()))
+      head = head.initializerList()
+    }
+    return {
+      type: 'ArrayExpression',
+      elements: elements
     }
   }
 
@@ -935,6 +957,7 @@ export function parse(source: string, context: Context) {
     try {
       const tree = parser.program()
       program = convertSource(tree)
+      console.log(program)
     } catch (error) {
       if (error instanceof FatalSyntaxError) {
         context.errors.push(error)
