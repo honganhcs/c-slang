@@ -154,6 +154,20 @@ class ProgramGenerator implements CVisitor<es.Program> {
     for (let i = 0; i < items.length; i++) {
       programBody.push(this.parseProgramItem(items[i]))
     }
+    const callToMainExpr: es.SimpleCallExpression = {
+      type: 'CallExpression',
+      callee: {
+        type: 'Identifier',
+        name: 'main'
+      },
+      arguments: [],
+      optional: false
+    }
+    const callToMain: es.ExpressionStatement = {
+      type: 'ExpressionStatement',
+      expression: callToMainExpr
+    }
+    programBody.push(callToMain)
     return program(programBody)
   }
 
