@@ -4,6 +4,7 @@ import {
   FunctionDeclaration,
   FunctionExpression,
   Identifier,
+  Literal,
   MemberExpression,
   VariableDeclaration,
   VariableDeclarator
@@ -13,7 +14,7 @@ import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue } from '../interpreter/interpreter'
 import { Kind } from '../types'
 import { actual } from '../utils/astMaps'
-import { validateFunction } from '../validator/validator'
+import { validateDeclarator, validateFunction } from '../validator/validator'
 
 export function* evaluateVariableDeclaration(node: VariableDeclaration, context: any) {
   const kind = actual['kind'](node.kind)
@@ -25,42 +26,46 @@ export function* evaluateVariableDeclaration(node: VariableDeclaration, context:
 }
 
 const declaratorMicrocode = {
-  Identifier: (o: any, k: any) => {
+  Identifier: (o: any, k: any, p: any) => {
     const object = o
     const kind = {
-      primitive: k
+      primitive: k,
+      pointer: p
     }
     return [object, kind]
   },
-  ArrayExpression: (o: any, k: any) => {
+  ArrayExpression: (o: any, k: any, p: any) => {
     const elements = (o as ArrayExpression).elements
     const object = elements[0]
     const kind = {
       primitive: k,
-      pointer: elements.slice(1).length
+      pointer: p + elements.slice(1).length
     }
     return [object, kind]
   },
-  FunctionExpression: (o: any, k: any) => {
+  FunctionExpression: (o: any, k: any, p: any) => {
     const object = (o as FunctionExpression).id
     const kind = {
-      primitive: k
+      primitive: k,
+      pointer: p
     }
     return [object, kind]
   }
 }
 
 function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, context: any) {
-  const object = (node.id as MemberExpression).object
-  const init = node.init
-  const props = declaratorMicrocode[object.type](object, type)
+  const id = node.id as MemberExpression
+  const object = id.object
+  const pointer = (id.property as Literal).value
+  const props = declaratorMicrocode[object.type](object, type, pointer)
   const name = (props[0] as Identifier).name
   const kind = props[1] as Kind
+  const init = node.init
   const value = init ? yield* actualValue(init as Expression, context) : undefined
   const frame = getCurrentFrame(context)
-  // TODO: validate variable, array, function
+  validateDeclarator(frame, name, kind, value, object.type)
   updateFrame(frame, name, kind, value)
-  return init
+  return value
 }
 
 export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: any) {

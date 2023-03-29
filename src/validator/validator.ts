@@ -151,6 +151,31 @@ export function validateAndAnnotate(
   return program
 }
 
+export function validateDeclarator(frame: Frame, name: any, kind: any, value: any, type: any) {
+  const microcode = {
+    Identifier: () => validateIdentifier(frame, name, kind, value),
+    ArrayExpression: () => validateArray(frame, name, kind, value),
+    FunctionExpression: () => validateFunction(frame, name, kind, value)
+  }
+  microcode[type]()
+}
+
+export function validateIdentifier(frame: Frame, name: any, kind: any, value: any) {
+  const obj = frame[name]
+  if (obj) {
+    if (obj.kind !== kind) {
+      throw new Error(`conflicting types for '${name}'`)
+    } else if (obj.value !== undefined && value !== undefined) {
+      throw new Error(`redefinition of '${name}'`)
+    }
+  }
+}
+
+export function validateArray(frame: Frame, name: any, kind: any, value: any) {
+  // TODO: validate array
+  return undefined
+}
+
 export function validateFunction(frame: Frame, name: any, kind: any, value: any) {
   const obj = frame[name]
   if (obj) {

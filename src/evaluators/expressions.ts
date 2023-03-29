@@ -14,6 +14,7 @@ import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
+  // TODO: handle array access
   return undefined
 }
 

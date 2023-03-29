@@ -384,5 +384,5 @@ export type TypeEnvironment = {
 
 export interface Kind {
   primitive: 'int' | 'float' | 'char' | 'void'
-  pointer?: number
+  pointer: number
 }
