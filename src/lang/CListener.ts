@@ -30,10 +30,10 @@ import { PointerContext } from './CParser'
 import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
 import { ParameterDeclarationContext } from './CParser'
+import { ParameterDeclaratorContext } from './CParser'
+import { ParameterDirectDeclaratorContext } from './CParser'
 import { IdentifierListContext } from './CParser'
 import { TypeNameContext } from './CParser'
-import { AbstractDeclaratorContext } from './CParser'
-import { DirectAbstractDeclaratorContext } from './CParser'
 import { InitializerContext } from './CParser'
 import { InitializerListContext } from './CParser'
 import { StatementContext } from './CParser'
@@ -363,6 +363,28 @@ export interface CListener extends ParseTreeListener {
   exitParameterDeclaration?: (ctx: ParameterDeclarationContext) => void
 
   /**
+   * Enter a parse tree produced by `CParser.parameterDeclarator`.
+   * @param ctx the parse tree
+   */
+  enterParameterDeclarator?: (ctx: ParameterDeclaratorContext) => void
+  /**
+   * Exit a parse tree produced by `CParser.parameterDeclarator`.
+   * @param ctx the parse tree
+   */
+  exitParameterDeclarator?: (ctx: ParameterDeclaratorContext) => void
+
+  /**
+   * Enter a parse tree produced by `CParser.parameterDirectDeclarator`.
+   * @param ctx the parse tree
+   */
+  enterParameterDirectDeclarator?: (ctx: ParameterDirectDeclaratorContext) => void
+  /**
+   * Exit a parse tree produced by `CParser.parameterDirectDeclarator`.
+   * @param ctx the parse tree
+   */
+  exitParameterDirectDeclarator?: (ctx: ParameterDirectDeclaratorContext) => void
+
+  /**
    * Enter a parse tree produced by `CParser.identifierList`.
    * @param ctx the parse tree
    */
@@ -383,28 +405,6 @@ export interface CListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitTypeName?: (ctx: TypeNameContext) => void
-
-  /**
-   * Enter a parse tree produced by `CParser.abstractDeclarator`.
-   * @param ctx the parse tree
-   */
-  enterAbstractDeclarator?: (ctx: AbstractDeclaratorContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.abstractDeclarator`.
-   * @param ctx the parse tree
-   */
-  exitAbstractDeclarator?: (ctx: AbstractDeclaratorContext) => void
-
-  /**
-   * Enter a parse tree produced by `CParser.directAbstractDeclarator`.
-   * @param ctx the parse tree
-   */
-  enterDirectAbstractDeclarator?: (ctx: DirectAbstractDeclaratorContext) => void
-  /**
-   * Exit a parse tree produced by `CParser.directAbstractDeclarator`.
-   * @param ctx the parse tree
-   */
-  exitDirectAbstractDeclarator?: (ctx: DirectAbstractDeclaratorContext) => void
 
   /**
    * Enter a parse tree produced by `CParser.initializer`.

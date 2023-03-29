@@ -121,10 +121,10 @@ declarator
     :   pointer? directDeclarator
     ;
 
-directDeclarator
-    :   Identifier // for variables
-    |   Identifier arrayDimension+ // for arrays
-    |   Identifier '(' parameterTypeList? ')' // for functions
+directDeclarator 
+    :   Identifier 
+    |   Identifier arrayDimension+ 
+    |   Identifier '(' parameterTypeList? ')'
     ;
 
 arrayDimension 
@@ -146,7 +146,16 @@ parameterList
 
 parameterDeclaration
     :   typeSpecifier
-    |   typeSpecifier declarator // TODO decide whether to add back abstractDeclarator
+    |   typeSpecifier parameterDeclarator
+    ;
+
+parameterDeclarator
+    :   pointer? parameterDirectDeclarator
+    ;
+
+parameterDirectDeclarator 
+    :   Identifier // for variables
+    |   Identifier arrayDimension+ // for arrays
     ;
 
 identifierList
@@ -156,18 +165,6 @@ identifierList
 
 typeName
     :   typeSpecifier pointer?
-    ;
-
-abstractDeclarator
-    :   pointer
-    |   pointer? directAbstractDeclarator
-    ;
-
-directAbstractDeclarator
-    :   '(' abstractDeclarator ')' 
-    |   '(' parameterTypeList? ')'
-    |   directAbstractDeclarator '[' constantExpression? ']'
-    |   directAbstractDeclarator '(' parameterTypeList? ')'
     ;
 
 initializer

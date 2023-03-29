@@ -363,9 +363,12 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
       type: 'Identifier',
       name: ctx.Identifier().text
     }
-    let obj: es.Expression
-    if (ctx.arrayDimension()) {
+
+    let obj: es.Expression = name
+
+    if (ctx.arrayDimension().length != 0) {
       // array
+      // TODO: add check all dimensions except the first are defined
       const elements: Array<es.Expression | es.SpreadElement | null> = [name]
       const dims = ctx.arrayDimension()
       dims.forEach(dim => {
@@ -376,6 +379,7 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
           elements.push(null)
         }
       })
+
       obj = {
         type: 'ArrayExpression',
         elements: elements
@@ -393,6 +397,7 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
         head = head.parameterList()
       }
       paramsList.reverse()
+
       obj = {
         type: 'FunctionExpression',
         id: name,
@@ -402,9 +407,8 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
           body: []
         }
       }
-    } else {
-      obj = name
     }
+
     return {
       type: 'VariableDeclarator',
       id: {
@@ -888,19 +892,31 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
   }
 
   visitParameterDeclaration(ctx: ParameterDeclarationContext): es.Expression {
-    // TODO handle pointer, array, function types
-    const type: es.Identifier = {
-      type: 'Identifier',
-      name: ctx.typeSpecifier().text
+    let numPointers = 0
+    if (ctx.parameterDeclarator()) {
+      const paramDeclarator = ctx.parameterDeclarator()!
+      if (paramDeclarator.pointer()) {
+        numPointers += paramDeclarator.pointer()!.Star().length
+      }
+      if (paramDeclarator.parameterDirectDeclarator().arrayDimension()) {
+        numPointers += paramDeclarator.parameterDirectDeclarator().arrayDimension().length
+      }
     }
     const declarator: es.Identifier = {
       type: 'Identifier',
-      name: ctx.declarator()?.text != undefined ? ctx.declarator()!.text : ''
+      name:
+        ctx.parameterDeclarator()?.text != undefined
+          ? ctx.parameterDeclarator()!.parameterDirectDeclarator().Identifier().text
+          : ''
     }
     return {
       type: 'MemberExpression',
       object: declarator,
-      property: type,
+      property: {
+        type: 'Literal',
+        bigint: ctx.typeSpecifier().text,
+        value: numPointers
+      },
       computed: false,
       optional: false
     }
