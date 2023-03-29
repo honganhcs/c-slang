@@ -1,32 +1,29 @@
 import {
+  ArrayExpression,
   AssignmentOperator,
   BigIntLiteral,
   BlockStatement,
-  FunctionExpression,
   Identifier,
   MemberExpression,
+  Pattern,
   SequenceExpression,
   UpdateOperator
 } from 'estree'
 
-import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { validateFunction } from '../validator/validator'
 
-export function evaluateFunctionExpression(node: FunctionExpression, context: any) {
-  const id = node.id as Identifier
-  const name = id.name
-  const props = node.params
-  const kind = (props[0] as MemberExpression).property
-  const params = props.slice(1)
+export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
+  return undefined
+}
+
+export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
+  params.forEach(p => p as MemberExpression)
   const value = {
     params: params,
-    body: null
+    body: body
   }
-  const frame = getGlobalFrame(context)
-  validateFunction(frame, name, kind, value)
-  updateFrame(frame, name, kind, value)
-  return undefined
+  return value
 }
 
 export function* evaluateCallExpression(callee: Identifier, args: any, context: any) {

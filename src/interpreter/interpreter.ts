@@ -8,6 +8,7 @@ import {
   evaluateVariableDeclaration
 } from '../evaluators/declarations'
 import {
+  evaluateArrayExpression,
   evaluateAssignmentExpression,
   evaluateCallExpression,
   evaluateConditionalExpression,
@@ -109,11 +110,13 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield* evaluateArrayExpression(node, context)
   },
 
   FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
-    return evaluateFunctionExpression(node, context)
+    const params = node.params
+    const body = node.body
+    return evaluateFunctionExpression(params, body)
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
