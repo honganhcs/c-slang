@@ -30,10 +30,10 @@ import { PointerContext } from './CParser'
 import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
 import { ParameterDeclarationContext } from './CParser'
+import { ParameterDeclaratorContext } from './CParser'
+import { ParameterDirectDeclaratorContext } from './CParser'
 import { IdentifierListContext } from './CParser'
 import { TypeNameContext } from './CParser'
-import { AbstractDeclaratorContext } from './CParser'
-import { DirectAbstractDeclaratorContext } from './CParser'
 import { InitializerContext } from './CParser'
 import { InitializerListContext } from './CParser'
 import { StatementContext } from './CParser'
@@ -254,6 +254,20 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
   visitParameterDeclaration?: (ctx: ParameterDeclarationContext) => Result
 
   /**
+   * Visit a parse tree produced by `CParser.parameterDeclarator`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitParameterDeclarator?: (ctx: ParameterDeclaratorContext) => Result
+
+  /**
+   * Visit a parse tree produced by `CParser.parameterDirectDeclarator`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitParameterDirectDeclarator?: (ctx: ParameterDirectDeclaratorContext) => Result
+
+  /**
    * Visit a parse tree produced by `CParser.identifierList`.
    * @param ctx the parse tree
    * @return the visitor result
@@ -266,20 +280,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitTypeName?: (ctx: TypeNameContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.abstractDeclarator`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitAbstractDeclarator?: (ctx: AbstractDeclaratorContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.directAbstractDeclarator`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitDirectAbstractDeclarator?: (ctx: DirectAbstractDeclaratorContext) => Result
 
   /**
    * Visit a parse tree produced by `CParser.initializer`.
