@@ -158,18 +158,6 @@ typeName
     :   typeSpecifier pointer?
     ;
 
-abstractDeclarator
-    :   pointer
-    |   pointer? directAbstractDeclarator
-    ;
-
-directAbstractDeclarator
-    :   '(' abstractDeclarator ')' 
-    |   '(' parameterTypeList? ')'
-    |   directAbstractDeclarator '[' constantExpression? ']'
-    |   directAbstractDeclarator '(' parameterTypeList? ')'
-    ;
-
 initializer
     :   assignmentExpression
     |   '{' initializerList '}'
