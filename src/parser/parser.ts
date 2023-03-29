@@ -363,8 +363,10 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
       type: 'Identifier',
       name: ctx.Identifier().text
     }
-    let obj: es.Expression
-    if (ctx.arrayDimension()) {
+
+    let obj: es.Expression = name
+
+    if (ctx.arrayDimension().length != 0) {
       // array
       const elements: Array<es.Expression | es.SpreadElement | null> = [name]
       const dims = ctx.arrayDimension()
@@ -376,6 +378,7 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
           elements.push(null)
         }
       })
+
       obj = {
         type: 'ArrayExpression',
         elements: elements
@@ -393,6 +396,7 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
         head = head.parameterList()
       }
       paramsList.reverse()
+
       obj = {
         type: 'FunctionExpression',
         id: name,
@@ -402,9 +406,8 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
           body: []
         }
       }
-    } else {
-      obj = name
     }
+
     return {
       type: 'VariableDeclarator',
       id: {

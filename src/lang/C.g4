@@ -121,10 +121,10 @@ declarator
     :   pointer? directDeclarator
     ;
 
-directDeclarator // TODO decide whether to add pointer to arrays
-    :   Identifier // for variables
-    |   Identifier arrayDimension+ // for arrays
-    |   Identifier '(' parameterTypeList? ')' // for functions
+directDeclarator 
+    :   Identifier 
+    |   Identifier arrayDimension+ 
+    |   Identifier '(' parameterTypeList? ')'
     ;
 
 arrayDimension 
@@ -153,7 +153,7 @@ parameterDeclarator
     :   pointer? parameterDirectDeclarator
     ;
 
-parameterDirectDeclarator // TODO decide whether to add pointer to arrays
+parameterDirectDeclarator 
     :   Identifier // for variables
     |   Identifier arrayDimension+ // for arrays
     ;
