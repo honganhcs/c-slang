@@ -146,7 +146,7 @@ parameterList
 
 parameterDeclaration
     :   typeSpecifier
-    |   typeSpecifier declarator 
+    |   typeSpecifier parameterDeclarator
     ;
 
 parameterDeclarator
