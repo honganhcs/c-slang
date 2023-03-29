@@ -121,7 +121,7 @@ declarator
     :   pointer? directDeclarator
     ;
 
-directDeclarator
+directDeclarator // TODO decide whether to add pointer to arrays
     :   Identifier // for variables
     |   Identifier arrayDimension+ // for arrays
     |   Identifier '(' parameterTypeList? ')' // for functions
@@ -146,7 +146,16 @@ parameterList
 
 parameterDeclaration
     :   typeSpecifier
-    |   typeSpecifier declarator // TODO decide whether to add back abstractDeclarator
+    |   typeSpecifier declarator 
+    ;
+
+parameterDeclarator
+    :   pointer? parameterDirectDeclarator
+    ;
+
+parameterDirectDeclarator // TODO decide whether to add pointer to arrays
+    :   Identifier // for variables
+    |   Identifier arrayDimension+ // for arrays
     ;
 
 identifierList
