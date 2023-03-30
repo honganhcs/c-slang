@@ -234,7 +234,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
     const result = yield* evaluateReturnStatement(node, context)
-    while (peekEnvironment(context).id !== context.runtime.callback?.id) {
+    while (peekEnvironment(context).id !== context.runtime.callbacks[0].id) {
       popEnvironment(context)
     }
     context.prelude = 'return'
@@ -271,9 +271,6 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 // tslint:enable:object-literal-shorthand
 
 export function* evaluate(node: es.Node, context: Context) {
-  console.log(node)
-  console.log(context)
-  console.log()
   const result = yield* evaluators[node.type](node, context)
   yield* leave(context)
   return result

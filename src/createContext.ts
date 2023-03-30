@@ -76,6 +76,7 @@ const createEmptyRuntime = () => ({
   isRunning: false,
   environmentTree: new EnvTree(),
   environments: [],
+  callbacks: [],
   value: undefined,
   nodes: []
 })
@@ -88,7 +89,9 @@ export const createGlobalEnvironment = (): Environment => ({
 })
 
 export const setCallbackEnvironment = (context: Context, callback?: Environment) => {
-  context.runtime.callback = callback
+  callback
+    ? context.runtime.callbacks.unshift(callback)
+    : context.runtime.callbacks.shift()
 }
 
 export const extendEnvironment = (
@@ -130,10 +133,11 @@ export const getGlobalFrame = (context: Context): Frame => {
   return global ? global.head : {}
 }
 
-export const lookupFrame = (context: Context, name: string, isFunc?: true) => {
+export const lookupFrame = (context: Context, name: string) => {
   let frame
   for (const env of context.runtime.environments) {
-    if (env.id === context.runtime.callback?.id) {
+    if (context.runtime.callbacks.length
+      && context.runtime.callbacks[0].id === env.id) {
       const global = getGlobalEnvironment(context)
       frame = global.head[name] ? global.head : undefined
       break

@@ -70,7 +70,10 @@ export function* evaluateConditionalExpression(
   consequent: any,
   context: any
 ) {
-  return test ? yield* actualValue(consequent, context) : yield* actualValue(alternate, context)
+  const result = test
+    ? yield* actualValue(consequent, context)
+    : yield* actualValue(alternate, context)
+  return result
 }
 
 const assignmentMicrocode = {
