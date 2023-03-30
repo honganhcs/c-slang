@@ -100,6 +100,7 @@ export interface Context<T = any> {
     isRunning: boolean
     environmentTree: EnvTree
     environments: Environment[]
+    callbacks: Environment[]
     nodes: es.Node[]
   }
 
