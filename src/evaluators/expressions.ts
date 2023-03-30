@@ -128,7 +128,7 @@ export function* evaluateUpdateExpression(
 }
 
 export function evaluateCastExpression(value: any, kind: Kind) {
-  // (float) [int *] is still valid in this implementation
+  // (float) [int *] is considered valid in this implementation
   const valueInt = Number.isInteger(value)
   const valid = !kind.pointers || valueInt
   if (!valid) {
