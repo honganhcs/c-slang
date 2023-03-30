@@ -1,14 +1,20 @@
 import {
+  ArrayExpression,
   Expression,
   FunctionDeclaration,
+  FunctionExpression,
   Identifier,
+  Literal,
+  MemberExpression,
   VariableDeclaration,
   VariableDeclarator
 } from 'estree'
 
 import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
 import { actualValue } from '../interpreter/interpreter'
+import { Kind } from '../types'
 import { actual } from '../utils/astMaps'
+import { validateDeclarator, validateFunction } from '../validator/validator'
 
 export function* evaluateVariableDeclaration(node: VariableDeclaration, context: any) {
   const kind = actual['kind'](node.kind)
@@ -19,28 +25,63 @@ export function* evaluateVariableDeclaration(node: VariableDeclaration, context:
   return result
 }
 
-function* evaluateVariableDeclarator(node: VariableDeclarator, kind: any, context: any) {
-  let init = node.init
-  if (init) {
-    init = yield* actualValue(init as Expression, context)
+const declaratorMicrocode = {
+  Identifier: (o: any, k: any, p: any) => {
+    const object = o
+    const kind = {
+      primitive: k,
+      pointer: p
+    }
+    return [object, kind]
+  },
+  ArrayExpression: (o: any, k: any, p: any) => {
+    const elements = (o as ArrayExpression).elements
+    const object = elements[0]
+    const kind = {
+      primitive: k,
+      pointer: p + elements.slice(1).length
+    }
+    return [object, kind]
+  },
+  FunctionExpression: (o: any, k: any, p: any) => {
+    const object = (o as FunctionExpression).id
+    const kind = {
+      primitive: k,
+      pointer: p
+    }
+    return [object, kind]
   }
+}
+
+function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, context: any) {
+  const id = node.id as MemberExpression
+  const object = id.object
+  const pointer = (id.property as Literal).value
+  const props = declaratorMicrocode[object.type](object, type, pointer)
+  const name = (props[0] as Identifier).name
+  const kind = props[1] as Kind
+  const init = node.init
+  const value = init ? yield* actualValue(init as Expression, context) : undefined
   const frame = getCurrentFrame(context)
-  const id = node.id as Identifier
-  updateFrame(frame, id.name, kind, init)
-  return init
+  validateDeclarator(frame, name, kind, value, object.type)
+  updateFrame(frame, name, kind, value)
+  return value
 }
 
 export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: any) {
-  const frame = getGlobalFrame(context)
   const id = node.id as Identifier
+  const name = id.name
   const props = node.params
-  const kind = (props[0] as Identifier).name
+  const kind = (props[0] as MemberExpression).property
   const params = props.slice(1)
+  params.forEach(p => p as MemberExpression)
   const body = node.body
   const value = {
     params: params,
     body: body
   }
-  updateFrame(frame, id.name, kind, value)
-  return undefined
+  const frame = getGlobalFrame(context)
+  validateFunction(frame, name, kind, value)
+  updateFrame(frame, name, kind, value)
+  return value
 }

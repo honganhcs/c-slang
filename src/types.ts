@@ -381,3 +381,8 @@ export type TypeEnvironment = {
   declKindMap: Map<string, AllowedDeclarations>
   typeAliasMap: Map<string, Type>
 }[]
+
+export interface Kind {
+  primitive: 'int' | 'float' | 'char' | 'void'
+  pointer: number
+}

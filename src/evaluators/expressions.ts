@@ -1,8 +1,11 @@
 import {
+  ArrayExpression,
   AssignmentOperator,
+  BigIntLiteral,
   BlockStatement,
   Identifier,
   MemberExpression,
+  Pattern,
   SequenceExpression,
   UpdateOperator
 } from 'estree'
@@ -10,26 +13,39 @@ import {
 import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
+export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
+  // TODO: handle array access
+  return undefined
+}
+
+export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
+  params.forEach(p => p as MemberExpression)
+  const value = {
+    params: params,
+    body: body
+  }
+  return value
+}
+
 export function* evaluateCallExpression(callee: Identifier, args: any, context: any) {
-  // TODO: handle non-identifier
+  // TODO: handle type-cast of arguments and return
   const func = callee.name
   const value = yield* actualValue(callee, context)
   const global = lookupFrame(context, func)
   if (global) {
-    const kind = global[func].kind
+    const kind = global[func].kind as BigIntLiteral
     const params = value.params
     const body = value.body as BlockStatement
     const frame = getCurrentFrame(context)
     for (const p of params) {
       const param = {
         name: (p.object as Identifier).name,
-        kind: (p.property as Identifier).name
+        kind: p.property as BigIntLiteral
       }
       const arg = args.shift()
       updateFrame(frame, param.name, param.kind, arg)
     }
 
-    // TODO: type-cast result to kind
     const result = yield* evaluate(body, context)
     if (context.prelude === 'return') {
       context.prelude = null

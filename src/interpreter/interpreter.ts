@@ -8,9 +8,11 @@ import {
   evaluateVariableDeclaration
 } from '../evaluators/declarations'
 import {
+  evaluateArrayExpression,
   evaluateAssignmentExpression,
   evaluateCallExpression,
   evaluateConditionalExpression,
+  evaluateFunctionExpression,
   evaluateSequenceExpression,
   evaluateUpdateExpression
 } from '../evaluators/expressions'
@@ -108,14 +110,20 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
-    throw new Error(`not supported yet: ${node.type}`)
+    return yield* evaluateArrayExpression(node, context)
+  },
+
+  FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
+    const params = node.params
+    const body = node.body
+    return evaluateFunctionExpression(params, body)
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
     const name = node.name
     const frame = lookupFrame(context, name)
     if (!frame) {
-      throw new Error(`cannot find variable ${name}`)
+      throw new Error(`${name} undeclared`)
     }
     return frame[name].value
   },
@@ -200,10 +208,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   FunctionDeclaration: function* (node: es.FunctionDeclaration, context: Context) {
-    // TODO: handle when function is defined but not declared
-    return node.id?.name === 'main'
-      ? yield* evaluate(node.body, context)
-      : yield evaluateFunctionDeclaration(node, context)
+    return yield evaluateFunctionDeclaration(node, context)
   },
 
   IfStatement: function* (node: es.IfStatement, context: Context) {
