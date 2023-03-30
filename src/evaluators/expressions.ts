@@ -44,7 +44,7 @@ export function* evaluateCallExpression(
     }
 
     let result = yield* evaluate(body, context)
-    result = evaluateCastExpression(result, kind)
+    name !== 'main' && (result = evaluateCastExpression(result, kind))
     if (context.prelude === 'return') {
       context.prelude = null
     }
@@ -137,10 +137,10 @@ export function evaluateCastExpression(value: number, kind: Kind) {
   }
   const result = valueInt
     ? kind.primitive === 'float'
-      ? value.toPrecision(24)
+      ? parseFloat(value.toPrecision(6))
       : value
     : kind.primitive === 'float'
-    ? value
-    : Math.trunc(value)
+      ? value
+      : Math.trunc(value)
   return result
 }
