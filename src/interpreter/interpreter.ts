@@ -6,8 +6,13 @@ import {
   getCurrentEnvironment,
   getGlobalEnvironment,
   lookupFrame,
-  setCallbackEnvironment
-} from '../createContext'
+  peekCallback,
+  peekEnvironment,
+  popCallback,
+  popEnvironment,
+  pushCallback,
+  pushEnvironment
+} from '../environment'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import {
   evaluateFunctionDeclaration,
@@ -84,17 +89,6 @@ function* leave(context: Context) {
   yield context
 }
 
-const peekEnvironment = (context: Context) => context.runtime.environments[0]
-const popEnvironment = (context: Context, id?: string) => {
-  if (!id || context.runtime.environments[0].id === id) {
-    context.runtime.environments.shift()
-  }
-}
-const pushEnvironment = (context: Context, environment: Environment) => {
-  context.runtime.environments.unshift(environment)
-  context.runtime.environmentTree.insert(environment)
-}
-
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
 /**
@@ -147,10 +141,10 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     const current = getCurrentEnvironment(context)
     const global = getGlobalEnvironment(context)
     const env = extendEnvironment(context, context.prelude, global)
-    setCallbackEnvironment(context, current)
+    pushCallback(context, current)
     pushEnvironment(context, env)
     const result = yield* evaluateCallExpression(name, value.params, value.body, args, context)
-    setCallbackEnvironment(context)
+    popCallback(context)
     popEnvironment(context, env.id)
     context.prelude = null
     return result
@@ -234,7 +228,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
     const result = yield* evaluateReturnStatement(node, context)
-    while (peekEnvironment(context).id !== context.runtime.callbacks[0].id) {
+    while (peekEnvironment(context).id !== peekCallback(context)?.id) {
       popEnvironment(context)
     }
     context.prelude = 'return'

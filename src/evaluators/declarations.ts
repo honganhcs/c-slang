@@ -10,7 +10,7 @@ import {
   VariableDeclarator
 } from 'estree'
 
-import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
 import { Kind } from '../types'
 import { actual } from '../utils/astMaps'

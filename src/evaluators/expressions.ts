@@ -10,7 +10,7 @@ import {
   UpdateOperator
 } from 'estree'
 
-import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
