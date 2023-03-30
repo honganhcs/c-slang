@@ -2,7 +2,6 @@ import {
   ArrayExpression,
   AssignmentOperator,
   BigIntLiteral,
-  BlockStatement,
   Identifier,
   MemberExpression,
   Pattern,
