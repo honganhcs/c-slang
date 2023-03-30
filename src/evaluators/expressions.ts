@@ -11,6 +11,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
+import { Kind } from '../types'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
   // TODO: handle array access
@@ -124,4 +125,21 @@ export function* evaluateUpdateExpression(
     updateFrame(frame, name, id.kind, after)
     return prefix ? after : before
   }
+}
+
+export function evaluateCastExpression(value: any, type: any) {
+  const kind = {
+    primitive: type.bigint,
+    pointers: type.value as unknown as number
+  } as Kind
+  // (float) [int *] is still valid in this implementation
+  const valueInt = Number.isInteger(value)
+  const valid = !kind.pointers || valueInt
+  if (!valid) {
+    const prim = kind.primitive.toString()
+    const ptr = kind.pointers ? (' ' + '*'.repeat(kind.pointers)) : ''
+    const type = prim + ptr
+    throw new Error(`incompatible types when casting to type ${type}`)
+  }
+  return (valueInt || kind.primitive === 'float') ? value : Math.trunc(value)
 }

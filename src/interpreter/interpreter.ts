@@ -22,6 +22,7 @@ import {
   evaluateArrayExpression,
   evaluateAssignmentExpression,
   evaluateCallExpression,
+  evaluateCastExpression,
   evaluateConditionalExpression,
   evaluateFunctionExpression,
   evaluateSequenceExpression,
@@ -174,6 +175,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
     const left = yield* actualValue(node.left, context)
     return yield* evaluateLogicalExpression(node.operator, left, node.right, context)
+  },
+
+  MemberExpression: function* (node: es.MemberExpression, context: Context) {
+    const value = yield* actualValue(node.object, context)
+    const kind = node.property as es.BigIntLiteral
+    return evaluateCastExpression(value, kind)
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {

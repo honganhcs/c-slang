@@ -1,7 +1,7 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { createGlobalEnvironment } from './environment'
-import { Context, Environment, Frame, Variant } from './types'
+import { Context, Environment, Variant } from './types'
 
 export class LazyBuiltIn {
   func: (...arg0: any) => any
