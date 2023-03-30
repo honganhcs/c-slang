@@ -10,7 +10,7 @@ import {
   VariableDeclarator
 } from 'estree'
 
-import { getCurrentFrame, getGlobalFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
 import { Kind } from '../types'
 import { actual } from '../utils/astMaps'
@@ -26,29 +26,36 @@ export function* evaluateVariableDeclaration(node: VariableDeclaration, context:
 }
 
 const declaratorMicrocode = {
-  Identifier: (o: any, k: any, p: any) => {
+  Identifier: function* (o: any, k: any, p: any) {
     const object = o
     const kind = {
       primitive: k,
-      pointer: p
-    }
+      pointers: p
+    } as Kind
     return [object, kind]
   },
-  ArrayExpression: (o: any, k: any, p: any) => {
+  ArrayExpression: function* (o: any, k: any, p: any, c: any) {
     const elements = (o as ArrayExpression).elements
     const object = elements[0]
+    const dims = elements.slice(1)
+    const dimensions = []
+    for (const dim of dims) {
+      const dimension = dim as unknown as Expression
+      dimensions.unshift(yield* actualValue(dimension, c))
+    }
     const kind = {
       primitive: k,
-      pointer: p + elements.slice(1).length
-    }
+      pointers: p + dimensions.length,
+      dimensions: dimensions
+    } as Kind
     return [object, kind]
   },
-  FunctionExpression: (o: any, k: any, p: any) => {
+  FunctionExpression: function* (o: any, k: any, p: any) {
     const object = (o as FunctionExpression).id
     const kind = {
       primitive: k,
-      pointer: p
-    }
+      pointers: p
+    } as Kind
     return [object, kind]
   }
 }
@@ -57,9 +64,9 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const id = node.id as MemberExpression
   const object = id.object
   const pointer = (id.property as Literal).value
-  const props = declaratorMicrocode[object.type](object, type, pointer)
+  const props = yield* declaratorMicrocode[object.type](object, type, pointer, context)
   const name = (props[0] as Identifier).name
-  const kind = props[1] as Kind
+  const kind = props[1]
   const init = node.init
   const value = init ? yield* actualValue(init as Expression, context) : undefined
   const frame = getCurrentFrame(context)

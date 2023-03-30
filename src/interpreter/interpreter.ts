@@ -1,7 +1,18 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
 
-import { extendCurrentEnvironment, lookupFrame } from '../createContext'
+import {
+  extendEnvironment,
+  getCurrentEnvironment,
+  getGlobalEnvironment,
+  lookupFrame,
+  peekCallback,
+  peekEnvironment,
+  popCallback,
+  popEnvironment,
+  pushCallback,
+  pushEnvironment
+} from '../environment'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import {
   evaluateFunctionDeclaration,
@@ -78,17 +89,6 @@ function* leave(context: Context) {
   yield context
 }
 
-const peekEnvironment = (context: Context) => context.runtime.environments[0]
-const popEnvironment = (context: Context, id?: string) => {
-  if (!id || context.runtime.environments[0].id === id) {
-    context.runtime.environments.shift()
-  }
-}
-const pushEnvironment = (context: Context, environment: Environment) => {
-  context.runtime.environments.unshift(environment)
-  context.runtime.environmentTree.insert(environment)
-}
-
 export type Evaluator<T extends es.Node> = (node: T, context: Context) => IterableIterator<Value>
 
 /**
@@ -130,15 +130,21 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
     const callee = node.callee as es.Identifier
+    const name = callee.name
+    const value = yield* actualValue(callee, context)
     const args = []
     for (const arg of node.arguments) {
       args.unshift(yield* actualValue(arg, context))
     }
     
-    context.prelude = 'function'
-    const env = extendCurrentEnvironment(context, context.prelude)
+    context.prelude = name
+    const current = getCurrentEnvironment(context)
+    const global = getGlobalEnvironment(context)
+    const env = extendEnvironment(context, context.prelude, global)
+    pushCallback(context, current)
     pushEnvironment(context, env)
-    const result = yield* evaluateCallExpression(callee, args, context)
+    const result = yield* evaluateCallExpression(name, value.params, value.body, args, context)
+    popCallback(context)
     popEnvironment(context, env.id)
     context.prelude = null
     return result
@@ -191,7 +197,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ForStatement: function* (node: es.ForStatement, context: Context) {
     context.prelude = 'for'
-    const env = extendCurrentEnvironment(context, context.prelude)
+    const env = extendEnvironment(context, context.prelude)
     pushEnvironment(context, env)
     const result = yield* evaluateForStatement(node, context)
     popEnvironment(context, env.id)
@@ -222,7 +228,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   ReturnStatement: function* (node: es.ReturnStatement, context: Context) {
     const result = yield* evaluateReturnStatement(node, context)
-    while (peekEnvironment(context).name !== 'function') {
+    while (peekEnvironment(context).id !== peekCallback(context)?.id) {
       popEnvironment(context)
     }
     context.prelude = 'return'
@@ -244,7 +250,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   BlockStatement: function* (node: es.BlockStatement, context: Context) {
-    const env = extendCurrentEnvironment(context, context.prelude)
+    const env = extendEnvironment(context, context.prelude)
     pushEnvironment(context, env)
     const result = yield* forceIt(yield* evaluateBlockSatement(node, context), context)
     popEnvironment(context, env.id)

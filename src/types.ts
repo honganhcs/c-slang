@@ -100,6 +100,7 @@ export interface Context<T = any> {
     isRunning: boolean
     environmentTree: EnvTree
     environments: Environment[]
+    callbacks: Environment[]
     nodes: es.Node[]
   }
 
@@ -384,5 +385,6 @@ export type TypeEnvironment = {
 
 export interface Kind {
   primitive: 'int' | 'float' | 'char' | 'void'
-  pointer: number
+  pointers: number
+  dimensions?: [number]
 }
