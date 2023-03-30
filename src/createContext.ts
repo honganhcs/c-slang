@@ -91,7 +91,11 @@ export const setCallbackEnvironment = (context: Context, callback?: Environment)
   context.runtime.callback = callback
 }
 
-export const extendEnvironment = (context: Context, name: string | null, enclosing?: Environment): Environment => ({
+export const extendEnvironment = (
+  context: Context,
+  name: string | null,
+  enclosing?: Environment
+): Environment => ({
   tail: enclosing ? enclosing : context.runtime.environments[0],
   name: name ? name : 'default',
   head: {},
@@ -105,12 +109,14 @@ export const getCurrentEnvironment = (context: Context): Environment => {
 export const getGlobalEnvironment = (context: Context): Environment => {
   const environments = context.runtime.environments
   const global = environments.find(env => env.name === 'global')
-  return global ? global : {
-    tail: null,
-    name: 'invalid',
-    head: {},
-    id: '-1'
-  }
+  return global
+    ? global
+    : {
+        tail: null,
+        name: 'invalid',
+        head: {},
+        id: '-1'
+      }
 }
 
 export const getCurrentFrame = (context: Context): Frame => {

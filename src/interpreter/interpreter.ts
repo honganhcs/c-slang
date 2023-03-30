@@ -1,7 +1,13 @@
 /* tslint:disable:max-classes-per-file */
 import * as es from 'estree'
 
-import { extendEnvironment, getCurrentEnvironment, getGlobalEnvironment, lookupFrame, setCallbackEnvironment } from '../createContext'
+import {
+  extendEnvironment,
+  getCurrentEnvironment,
+  getGlobalEnvironment,
+  lookupFrame,
+  setCallbackEnvironment
+} from '../createContext'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import {
   evaluateFunctionDeclaration,

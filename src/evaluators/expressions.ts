@@ -27,7 +27,13 @@ export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
   return value
 }
 
-export function* evaluateCallExpression(name: any, params: any, body: any, args: any, context: any) {
+export function* evaluateCallExpression(
+  name: any,
+  params: any,
+  body: any,
+  args: any,
+  context: any
+) {
   // TODO: handle type-cast of arguments and return
   const global = getGlobalFrame(context)
   if (global && global[name]) {
