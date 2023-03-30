@@ -26,28 +26,35 @@ export function* evaluateVariableDeclaration(node: VariableDeclaration, context:
 }
 
 const declaratorMicrocode = {
-  Identifier: (o: any, k: any, p: any) => {
+  Identifier: function* (o: any, k: any, p: any) {
     const object = o
     const kind = {
       primitive: k,
-      pointer: p
+      pointers: p
     }
     return [object, kind]
   },
-  ArrayExpression: (o: any, k: any, p: any) => {
+  ArrayExpression: function* (o: any, k: any, p: any, c: any) {
     const elements = (o as ArrayExpression).elements
     const object = elements[0]
+    const dims = elements.slice(1)
+    const dimensions = []
+    for (const dim of dims) {
+      const dimension = dim as unknown as Expression
+      dimensions.unshift(yield* actualValue(dimension, c))
+    }
     const kind = {
       primitive: k,
-      pointer: p + elements.slice(1).length
+      pointers: p + dimensions.length,
+      dimensions: dimensions
     }
     return [object, kind]
   },
-  FunctionExpression: (o: any, k: any, p: any) => {
+  FunctionExpression: function* (o: any, k: any, p: any) {
     const object = (o as FunctionExpression).id
     const kind = {
       primitive: k,
-      pointer: p
+      pointers: p
     }
     return [object, kind]
   }
