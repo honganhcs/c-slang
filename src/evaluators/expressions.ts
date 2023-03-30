@@ -137,9 +137,9 @@ export function evaluateCastExpression(value: any, type: any) {
   const valid = !kind.pointers || valueInt
   if (!valid) {
     const prim = kind.primitive.toString()
-    const ptr = kind.pointers ? (' ' + '*'.repeat(kind.pointers)) : ''
+    const ptr = kind.pointers ? ' ' + '*'.repeat(kind.pointers) : ''
     const type = prim + ptr
     throw new Error(`incompatible types when casting to type ${type}`)
   }
-  return (valueInt || kind.primitive === 'float') ? value : Math.trunc(value)
+  return valueInt || kind.primitive === 'float' ? value : Math.trunc(value)
 }
