@@ -140,7 +140,7 @@ export function evaluateCastExpression(value: number, kind: Kind) {
       ? parseFloat(value.toPrecision(6))
       : value
     : kind.primitive === 'float'
-      ? value
-      : Math.trunc(value)
+    ? value
+    : Math.trunc(value)
   return result
 }
