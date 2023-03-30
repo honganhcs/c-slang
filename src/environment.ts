@@ -1,9 +1,10 @@
-import { Context, Environment, Frame } from "./types"
+import { Context, Environment, Frame } from './types'
 
 export const peekCallback = (context: Context) =>
   context.runtime.callbacks.length ? context.runtime.callbacks[0] : undefined
 export const popCallback = (context: Context) => context.runtime.callbacks.shift()
-export const pushCallback = (context: Context, callback: Environment) => context.runtime.callbacks.unshift(callback)
+export const pushCallback = (context: Context, callback: Environment) =>
+  context.runtime.callbacks.unshift(callback)
 
 export const peekEnvironment = (context: Context) => context.runtime.environments[0]
 export const popEnvironment = (context: Context, id?: string) => {
