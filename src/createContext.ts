@@ -89,9 +89,7 @@ export const createGlobalEnvironment = (): Environment => ({
 })
 
 export const setCallbackEnvironment = (context: Context, callback?: Environment) => {
-  callback
-    ? context.runtime.callbacks.unshift(callback)
-    : context.runtime.callbacks.shift()
+  callback ? context.runtime.callbacks.unshift(callback) : context.runtime.callbacks.shift()
 }
 
 export const extendEnvironment = (
@@ -136,8 +134,7 @@ export const getGlobalFrame = (context: Context): Frame => {
 export const lookupFrame = (context: Context, name: string) => {
   let frame
   for (const env of context.runtime.environments) {
-    if (context.runtime.callbacks.length
-      && context.runtime.callbacks[0].id === env.id) {
+    if (context.runtime.callbacks.length && context.runtime.callbacks[0].id === env.id) {
       const global = getGlobalEnvironment(context)
       frame = global.head[name] ? global.head : undefined
       break
