@@ -71,7 +71,7 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const kind = props[1]
   const init = node.init
   let value = init ? yield* actualValue(init as Expression, context) : undefined
-  value = evaluateCastExpression(value, kind)
+  value && (value = evaluateCastExpression(value, kind))
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, object.type)
   updateFrame(frame, name, kind, value)
