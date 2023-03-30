@@ -31,7 +31,7 @@ const declaratorMicrocode = {
     const kind = {
       primitive: k,
       pointers: p
-    }
+    } as Kind
     return [object, kind]
   },
   ArrayExpression: function* (o: any, k: any, p: any, c: any) {
@@ -47,7 +47,7 @@ const declaratorMicrocode = {
       primitive: k,
       pointers: p + dimensions.length,
       dimensions: dimensions
-    }
+    } as Kind
     return [object, kind]
   },
   FunctionExpression: function* (o: any, k: any, p: any) {
@@ -55,7 +55,7 @@ const declaratorMicrocode = {
     const kind = {
       primitive: k,
       pointers: p
-    }
+    } as Kind
     return [object, kind]
   }
 }
