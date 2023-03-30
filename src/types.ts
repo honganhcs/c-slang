@@ -389,7 +389,8 @@ export interface Kind {
   dimensions?: [number]
 }
 
-export const toKind = (kind: es.BigIntLiteral) => ({
-  primitive: kind.bigint,
-  pointers: kind.value as unknown as number
-} as Kind)
+export const toKind = (kind: es.BigIntLiteral) =>
+  ({
+    primitive: kind.bigint,
+    pointers: kind.value as unknown as number
+  } as Kind)
