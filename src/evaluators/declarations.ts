@@ -64,9 +64,9 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const id = node.id as MemberExpression
   const object = id.object
   const pointer = (id.property as Literal).value
-  const props = declaratorMicrocode[object.type](object, type, pointer, context)
+  const props = yield* declaratorMicrocode[object.type](object, type, pointer, context)
   const name = (props[0] as Identifier).name
-  const kind = props[1] as Kind
+  const kind = props[1]
   const init = node.init
   const value = init ? yield* actualValue(init as Expression, context) : undefined
   const frame = getCurrentFrame(context)
