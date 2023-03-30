@@ -11,6 +11,14 @@ export class Heap {
     this.heapSize = words
   }
 
+  allocateMemory(value: any, kind: any) {
+    if (kind.primitive == 'int') {
+      return this.allocateInt(value)
+    } else if (kind.primitive == 'float') {
+      return this.allocateFloat(value)
+    }
+  }
+
   allocate() {
     if (this.free >= this.heapSize) {
       throw new Error('memory exhausted')
@@ -22,14 +30,38 @@ export class Heap {
 
   allocateInt(value: number) {
     const address = this.allocate()
-    this.heap.setInt32(address * wordSize, value)
+    this.setInt(address, value)
     return address
   }
 
   allocateFloat(value: number) {
     const address = this.allocate()
-    this.heap.setFloat32(address * wordSize, value)
+    this.setFloat(address, value)
     return address
+  }
+
+  setMemory(value: any, address: number, kind: any) {
+    if (kind.primitive == 'int') {
+      this.setInt(address, value)
+    } else if (kind.primitive == 'float') {
+      this.setFloat(address, value)
+    }
+  }
+
+  setInt(address: number, value: number) {
+    this.heap.setInt32(address * wordSize, value)
+  }
+
+  setFloat(address: number, value: number) {
+    this.heap.setFloat32(address * wordSize, value)
+  }
+
+  getMemory(address: number, kind: any) {
+    if (kind.primitive == 'int') {
+      return this.getInt(address)
+    } else if (kind.primitive == 'float') {
+      return this.getFloat(address)
+    }
   }
 
   getInt(address: number) {
