@@ -71,7 +71,8 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const value = init ? yield* actualValue(init as Expression, context) : undefined
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, object.type)
-  updateFrame(frame, name, kind, value)
+  const address = context.runtime.heap.allocateMemory(value, kind)
+  updateFrame(frame, name, kind, address)
   return value
 }
 

@@ -44,7 +44,8 @@ export function* evaluateCallExpression(
         kind: p.property as BigIntLiteral
       }
       const arg = args.shift()
-      updateFrame(frame, param.name, param.kind, arg)
+      const address = context.runtime.heap.allocateMemory(arg, param.kind)
+      updateFrame(frame, param.name, param.kind, address)
     }
 
     const result = yield* evaluate(body, context)
@@ -96,9 +97,9 @@ export function* evaluateAssignmentExpression(
   const rhs = yield* actualValue(right, context)
   const frame = lookupFrame(context, name)
   if (frame) {
-    const id = frame[name]
     const value = assignmentMicrocode[operator](lhs, rhs)
-    updateFrame(frame, name, id.kind, value)
+    const address = frame[name].value
+    context.runtime.heap.setMemory(address, value)
     return value
   }
 }
@@ -120,8 +121,8 @@ export function* evaluateUpdateExpression(
   const after = updateMicrocode[operator](before)
   const frame = lookupFrame(context, name)
   if (frame) {
-    const id = frame[name]
-    updateFrame(frame, name, id.kind, after)
+    const address = frame[name].value
+    context.runtime.heap.setMemory(address, after)
     return prefix ? after : before
   }
 }
