@@ -125,7 +125,7 @@ export function* evaluateUpdateExpression(
   }
 }
 
-export function evaluateCastExpression(value: any, kind: Kind) {
+export function evaluateCastExpression(value: number, kind: Kind) {
   // (float) [int *] is considered valid in this implementation
   const valueInt = Number.isInteger(value)
   const valid = !kind.pointers || valueInt
@@ -135,5 +135,12 @@ export function evaluateCastExpression(value: any, kind: Kind) {
     const type = prim + ptr
     throw new Error(`incompatible types when casting to type ${type}`)
   }
-  return valueInt || kind.primitive === 'float' ? value : Math.trunc(value)
+  const result = valueInt
+    ? kind.primitive === 'float'
+      ? value.toPrecision(24)
+      : value
+    : kind.primitive === 'float'
+    ? value
+    : Math.trunc(value)
+  return result
 }
