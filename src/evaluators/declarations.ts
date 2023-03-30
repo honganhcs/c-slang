@@ -15,6 +15,7 @@ import { actualValue } from '../interpreter/interpreter'
 import { Kind } from '../types'
 import { actual } from '../utils/astMaps'
 import { validateDeclarator, validateFunction } from '../validator/validator'
+import { evaluateCastExpression } from './expressions'
 
 export function* evaluateVariableDeclaration(node: VariableDeclaration, context: any) {
   const kind = actual['kind'](node.kind)
@@ -68,7 +69,8 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const name = (props[0] as Identifier).name
   const kind = props[1]
   const init = node.init
-  const value = init ? yield* actualValue(init as Expression, context) : undefined
+  let value = init ? yield* actualValue(init as Expression, context) : undefined
+  value = evaluateCastExpression(value, kind)
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, object.type)
   updateFrame(frame, name, kind, value)

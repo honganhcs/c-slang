@@ -11,7 +11,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { Kind } from '../types'
+import { Kind, toKind } from '../types'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
   // TODO: handle array access
@@ -34,21 +34,19 @@ export function* evaluateCallExpression(
   args: any,
   context: any
 ) {
-  // TODO: handle type-cast of arguments and return
   const global = getGlobalFrame(context)
   if (global && global[name]) {
-    const kind = global[name].kind as BigIntLiteral
+    const kind = global[name].kind
     const frame = getCurrentFrame(context)
-    for (const p of params) {
-      const param = {
-        name: (p.object as Identifier).name,
-        kind: p.property as BigIntLiteral
-      }
-      const arg = args.shift()
-      updateFrame(frame, param.name, param.kind, arg)
+    for (const param of params) {
+      const name = (param.object as Identifier).name
+      const kind = toKind(param.property as BigIntLiteral)
+      const arg = evaluateCastExpression(args.shift(), kind)
+      updateFrame(frame, name, kind, arg)
     }
 
-    const result = yield* evaluate(body, context)
+    let result = yield* evaluate(body, context)
+    result = evaluateCastExpression(result, kind)
     if (context.prelude === 'return') {
       context.prelude = null
     }
@@ -94,12 +92,14 @@ export function* evaluateAssignmentExpression(
   // TODO: handle non-identifier
   const name = left.name
   const lhs = yield* actualValue(left, context)
-  const rhs = yield* actualValue(right, context)
+  let rhs = yield* actualValue(right, context)
   const frame = lookupFrame(context, name)
   if (frame) {
     const id = frame[name]
+    const kind = id.kind
+    rhs = evaluateCastExpression(rhs, kind)
     const value = assignmentMicrocode[operator](lhs, rhs)
-    updateFrame(frame, name, id.kind, value)
+    updateFrame(frame, name, kind, value)
     return value
   }
 }
@@ -127,11 +127,7 @@ export function* evaluateUpdateExpression(
   }
 }
 
-export function evaluateCastExpression(value: any, type: any) {
-  const kind = {
-    primitive: type.bigint,
-    pointers: type.value as unknown as number
-  } as Kind
+export function evaluateCastExpression(value: any, kind: Kind) {
   // (float) [int *] is still valid in this implementation
   const valueInt = Number.isInteger(value)
   const valid = !kind.pointers || valueInt

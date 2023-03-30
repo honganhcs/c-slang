@@ -41,7 +41,7 @@ import {
   evaluateReturnStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
-import { Context, Environment, Value } from '../types'
+import { Context, Environment, Kind, toKind, Value } from '../types'
 
 class Thunk {
   public value: Value
@@ -179,7 +179,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 
   MemberExpression: function* (node: es.MemberExpression, context: Context) {
     const value = yield* actualValue(node.object, context)
-    const kind = node.property as es.BigIntLiteral
+    const kind = toKind(node.property as es.BigIntLiteral)
     return evaluateCastExpression(value, kind)
   },
 
