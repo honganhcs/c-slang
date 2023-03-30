@@ -1,8 +1,6 @@
 import {
   ArrayExpression,
   AssignmentOperator,
-  BigIntLiteral,
-  Identifier,
   MemberExpression,
   Pattern,
   SequenceExpression,
@@ -11,7 +9,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { Kind, toKind } from '../types'
+import { Kind } from '../types'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
   // TODO: handle array access
@@ -39,8 +37,8 @@ export function* evaluateCallExpression(
     const kind = global[name].kind
     const frame = getCurrentFrame(context)
     for (const param of params) {
-      const name = (param.object as Identifier).name
-      const kind = toKind(param.property as BigIntLiteral)
+      const name = param.name
+      const kind = param.kind
       const arg = evaluateCastExpression(args.shift(), kind)
       updateFrame(frame, name, kind, arg)
     }

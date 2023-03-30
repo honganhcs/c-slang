@@ -1,5 +1,6 @@
 import {
   ArrayExpression,
+  BigIntLiteral,
   Expression,
   FunctionDeclaration,
   FunctionExpression,
@@ -12,7 +13,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
-import { Kind } from '../types'
+import { Kind, toKind } from '../types'
 import { actual } from '../utils/astMaps'
 import { validateDeclarator, validateFunction } from '../validator/validator'
 import { evaluateCastExpression } from './expressions'
@@ -42,7 +43,7 @@ const declaratorMicrocode = {
     const dimensions = []
     for (const dim of dims) {
       const dimension = dim as unknown as Expression
-      dimensions.unshift(yield* actualValue(dimension, c))
+      dimensions.push(yield* actualValue(dimension, c))
     }
     const kind = {
       primitive: k,
@@ -81,9 +82,18 @@ export function evaluateFunctionDeclaration(node: FunctionDeclaration, context: 
   const id = node.id as Identifier
   const name = id.name
   const props = node.params
-  const kind = (props[0] as MemberExpression).property
-  const params = props.slice(1)
-  params.forEach(p => p as MemberExpression)
+  const ret = (props[0] as MemberExpression).property
+  const kind = toKind(ret as BigIntLiteral)
+  const params = []
+  for (const p of props.slice(1)) {
+    const prop = p as MemberExpression
+    const name = (prop.object as Identifier).name
+    const kind = toKind(prop.property as BigIntLiteral)
+    params.push({
+      name: name,
+      kind: kind
+    })
+  }
   const body = node.body
   const value = {
     params: params,
