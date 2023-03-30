@@ -87,13 +87,31 @@ export const createGlobalEnvironment = (): Environment => ({
   id: '-1'
 })
 
-export const extendCurrentEnvironment = (context: Context, name: string | null): Environment => ({
-  // TODO: refactor id
-  tail: context.runtime.environments[0],
+export const setCallbackEnvironment = (context: Context, callback?: Environment) => {
+  context.runtime.callback = callback
+}
+
+export const extendEnvironment = (context: Context, name: string | null, enclosing?: Environment): Environment => ({
+  tail: enclosing ? enclosing : context.runtime.environments[0],
   name: name ? name : 'default',
   head: {},
   id: Math.random().toString()
 })
+
+export const getCurrentEnvironment = (context: Context): Environment => {
+  return context.runtime.environments[0]
+}
+
+export const getGlobalEnvironment = (context: Context): Environment => {
+  const environments = context.runtime.environments
+  const global = environments.find(env => env.name === 'global')
+  return global ? global : {
+    tail: null,
+    name: 'invalid',
+    head: {},
+    id: '-1'
+  }
+}
 
 export const getCurrentFrame = (context: Context): Frame => {
   const env = context.runtime.environments[0]
@@ -106,10 +124,14 @@ export const getGlobalFrame = (context: Context): Frame => {
   return global ? global.head : {}
 }
 
-export const lookupFrame = (context: Context, name: string) => {
+export const lookupFrame = (context: Context, name: string, isFunc?: true) => {
   let frame
   for (const env of context.runtime.environments) {
-    if (env.head[name]) {
+    if (env.id === context.runtime.callback?.id) {
+      const global = getGlobalEnvironment(context)
+      frame = global.head[name] ? global.head : undefined
+      break
+    } else if (env.head[name]) {
       frame = env.head
       break
     }

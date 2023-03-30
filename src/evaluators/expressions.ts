@@ -10,7 +10,7 @@ import {
   UpdateOperator
 } from 'estree'
 
-import { getCurrentFrame, lookupFrame, updateFrame } from '../createContext'
+import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../createContext'
 import { actualValue, evaluate } from '../interpreter/interpreter'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
@@ -27,15 +27,11 @@ export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
   return value
 }
 
-export function* evaluateCallExpression(callee: Identifier, args: any, context: any) {
+export function* evaluateCallExpression(name: any, params: any, body: any, args: any, context: any) {
   // TODO: handle type-cast of arguments and return
-  const func = callee.name
-  const value = yield* actualValue(callee, context)
-  const global = lookupFrame(context, func)
-  if (global) {
-    const kind = global[func].kind as BigIntLiteral
-    const params = value.params
-    const body = value.body as BlockStatement
+  const global = getGlobalFrame(context)
+  if (global && global[name]) {
+    const kind = global[name].kind as BigIntLiteral
     const frame = getCurrentFrame(context)
     for (const p of params) {
       const param = {
