@@ -99,7 +99,7 @@ export function* evaluateAssignmentExpression(
     rhs = evaluateCastExpression(rhs, kind)
     const value = assignmentMicrocode[operator](lhs, rhs)
     const address = frame[name].value
-    context.runtime.heap.setMemory(address, value)
+    context.runtime.heap.setMemory(address, value, kind)
     return value
   }
 }
@@ -122,7 +122,8 @@ export function* evaluateUpdateExpression(
   const frame = lookupFrame(context, name)
   if (frame) {
     const address = frame[name].value
-    context.runtime.heap.setMemory(address, after)
+    const kind = frame[name].kind
+    context.runtime.heap.setMemory(address, after, kind)
     return prefix ? after : before
   }
 }

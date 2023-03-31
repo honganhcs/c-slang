@@ -43,7 +43,7 @@ export class Heap {
     return address
   }
 
-  setMemory(value: any, address: number, kind: any) {
+  setMemory(address: number, value: any, kind: any) {
     if (kind.primitive == 'int') {
       this.setInt(address, value)
     } else if (kind.primitive == 'float') {
