@@ -22,6 +22,7 @@ import {
   evaluateArrayExpression,
   evaluateAssignmentExpression,
   evaluateCallExpression,
+  evaluateCastExpression,
   evaluateConditionalExpression,
   evaluateFunctionExpression,
   evaluateSequenceExpression,
@@ -40,7 +41,7 @@ import {
   evaluateReturnStatement,
   evaluateWhileStatement
 } from '../evaluators/statements'
-import { Context, Environment, Value } from '../types'
+import { Context, Environment, Kind, toKind, Value } from '../types'
 
 class Thunk {
   public value: Value
@@ -136,7 +137,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     const value = yield* actualValue(callee, context)
     const args = []
     for (const arg of node.arguments) {
-      args.unshift(yield* actualValue(arg, context))
+      args.push(yield* actualValue(arg, context))
     }
     
     context.prelude = name
@@ -176,6 +177,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   LogicalExpression: function* (node: es.LogicalExpression, context: Context) {
     const left = yield* actualValue(node.left, context)
     return yield* evaluateLogicalExpression(node.operator, left, node.right, context)
+  },
+
+  MemberExpression: function* (node: es.MemberExpression, context: Context) {
+    const value = yield* actualValue(node.object, context)
+    const kind = toKind(node.property as es.BigIntLiteral)
+    return evaluateCastExpression(value, kind)
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {

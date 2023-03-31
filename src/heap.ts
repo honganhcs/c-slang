@@ -17,6 +17,8 @@ export class Heap {
     } else if (kind.primitive == 'float') {
       return this.allocateFloat(value)
     }
+    // TODO
+    return this.allocateInt(value)
   }
 
   allocate() {
@@ -62,6 +64,8 @@ export class Heap {
     } else if (kind.primitive == 'float') {
       return this.getFloat(address)
     }
+    // TODO
+    return this.getInt(address)
   }
 
   getInt(address: number) {

@@ -1,8 +1,6 @@
 import {
   ArrayExpression,
   AssignmentOperator,
-  BigIntLiteral,
-  Identifier,
   MemberExpression,
   Pattern,
   SequenceExpression,
@@ -11,6 +9,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
+import { Kind } from '../types'
 
 export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
   // TODO: handle array access
@@ -33,22 +32,20 @@ export function* evaluateCallExpression(
   args: any,
   context: any
 ) {
-  // TODO: handle type-cast of arguments and return
   const global = getGlobalFrame(context)
   if (global && global[name]) {
-    const kind = global[name].kind as BigIntLiteral
+    const kind = global[name].kind
     const frame = getCurrentFrame(context)
-    for (const p of params) {
-      const param = {
-        name: (p.object as Identifier).name,
-        kind: p.property as BigIntLiteral
-      }
-      const arg = args.shift()
-      const address = context.runtime.heap.allocateMemory(arg, param.kind)
-      updateFrame(frame, param.name, param.kind, address)
+    for (const param of params) {
+      const name = param.name
+      const kind = param.kind
+      const arg = evaluateCastExpression(args.shift(), kind)
+      const address = context.runtime.heap.allocateMemory(arg, kind)
+      updateFrame(frame, name, kind, address)
     }
 
-    const result = yield* evaluate(body, context)
+    let result = yield* evaluate(body, context)
+    name !== 'main' && (result = evaluateCastExpression(result, kind))
     if (context.prelude === 'return') {
       context.prelude = null
     }
@@ -94,9 +91,12 @@ export function* evaluateAssignmentExpression(
   // TODO: handle non-identifier
   const name = left.name
   const lhs = yield* actualValue(left, context)
-  const rhs = yield* actualValue(right, context)
+  let rhs = yield* actualValue(right, context)
   const frame = lookupFrame(context, name)
   if (frame) {
+    const id = frame[name]
+    const kind = id.kind
+    rhs = evaluateCastExpression(rhs, kind)
     const value = assignmentMicrocode[operator](lhs, rhs)
     const address = frame[name].value
     context.runtime.heap.setMemory(address, value)
@@ -125,4 +125,24 @@ export function* evaluateUpdateExpression(
     context.runtime.heap.setMemory(address, after)
     return prefix ? after : before
   }
+}
+
+export function evaluateCastExpression(value: number, kind: Kind) {
+  // (float) [int *] is considered valid in this implementation
+  const valueInt = Number.isInteger(value)
+  const valid = !kind.pointers || valueInt
+  if (!valid) {
+    const prim = kind.primitive.toString()
+    const ptr = kind.pointers ? ' ' + '*'.repeat(kind.pointers) : ''
+    const type = prim + ptr
+    throw new Error(`incompatible types when casting to type ${type}`)
+  }
+  const result = valueInt
+    ? kind.primitive === 'float'
+      ? parseFloat(value.toPrecision(6))
+      : value
+    : kind.primitive === 'float'
+      ? value
+      : Math.trunc(value)
+  return result
 }
