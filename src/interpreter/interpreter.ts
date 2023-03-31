@@ -126,9 +126,12 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     if (!frame) {
       throw new Error(`${name} undeclared`)
     }
-    const address = frame[name].value
+    const value = frame[name].value
+    if (value.body) {
+      return value
+    }
     const kind = frame[name].kind
-    return context.runtime.heap.getMemory(address, kind)
+    return context.runtime.heap.getMemory(value, kind)
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
