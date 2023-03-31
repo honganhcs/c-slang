@@ -40,7 +40,8 @@ export function* evaluateCallExpression(
       const name = param.name
       const kind = param.kind
       const arg = evaluateCastExpression(args.shift(), kind)
-      updateFrame(frame, name, kind, arg)
+      const address = context.runtime.heap.allocateMemory(arg, kind)
+      updateFrame(frame, name, kind, address)
     }
 
     let result = yield* evaluate(body, context)
@@ -97,7 +98,8 @@ export function* evaluateAssignmentExpression(
     const kind = id.kind
     rhs = evaluateCastExpression(rhs, kind)
     const value = assignmentMicrocode[operator](lhs, rhs)
-    updateFrame(frame, name, kind, value)
+    const address = frame[name].value
+    context.runtime.heap.setMemory(address, value, kind)
     return value
   }
 }
@@ -119,8 +121,9 @@ export function* evaluateUpdateExpression(
   const after = updateMicrocode[operator](before)
   const frame = lookupFrame(context, name)
   if (frame) {
-    const id = frame[name]
-    updateFrame(frame, name, id.kind, after)
+    const address = frame[name].value
+    const kind = frame[name].kind
+    context.runtime.heap.setMemory(address, after, kind)
     return prefix ? after : before
   }
 }

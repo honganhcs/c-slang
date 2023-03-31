@@ -1,7 +1,10 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { createGlobalEnvironment } from './environment'
+import { Heap } from './heap'
 import { Context, Environment, Variant } from './types'
+
+const heapWordSize = 10000
 
 export class LazyBuiltIn {
   func: (...arg0: any) => any
@@ -79,7 +82,8 @@ const createEmptyRuntime = () => ({
   environments: [],
   callbacks: [],
   value: undefined,
-  nodes: []
+  nodes: [],
+  heap: new Heap(heapWordSize)
 })
 
 export const createEmptyContext = <T>(
