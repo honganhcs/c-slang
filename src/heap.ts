@@ -9,6 +9,7 @@ export class Heap {
     const data = new ArrayBuffer(words * wordSize)
     this.heap = new DataView(data)
     this.heapSize = words
+    this.free = 0
   }
 
   allocateMemory(value: any, kind: any) {
