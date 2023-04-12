@@ -40,10 +40,14 @@ export function* evaluateCallExpression(
       const name = param.name
       const kind = param.kind
       const arg = evaluateCastExpression(args.shift(), kind)
+      console.log('arg: ' + arg)
       const address = context.runtime.memory.allocateMemory(arg, kind, false)
       updateFrame(frame, name, kind, address)
     }
+    console.log('evaluating result')
+    console.log(body)
     let result = yield* evaluate(body, context)
+    console.log('result: ' + result)
     name !== 'main' && (result = evaluateCastExpression(result, kind))
     if (context.prelude === 'return') {
       context.prelude = null
@@ -122,7 +126,7 @@ export function* evaluateUpdateExpression(
   if (frame) {
     const address = frame[name].value
     const kind = frame[name].kind
-    context.runtime.heap.setMemory(address, after, kind)
+    context.runtime.memory.setMemory(address, after, kind)
     return prefix ? after : before
   }
 }

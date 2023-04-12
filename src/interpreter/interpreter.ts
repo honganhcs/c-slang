@@ -124,6 +124,8 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     const name = node.name
     const frame = lookupFrame(context, name)
     if (!frame) {
+      console.log(`${name} undeclared`)
+      console.log(context.runtime.environments)
       throw new Error(`${name} undeclared`)
     }
     const value = frame[name].value
@@ -150,6 +152,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     pushCallback(context, current)
     pushEnvironment(context, env)
     const result = yield* evaluateCallExpression(name, value.params, value.body, args, context)
+    console.log("result: " + result)
     popCallback(context)
     popEnvironment(context, env.id)
     context.prelude = null

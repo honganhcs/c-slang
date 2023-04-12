@@ -34,11 +34,15 @@ export class Memory {
       return false
     }
     this.stackPointer = address
+    console.log('free memory at ' + this.stackPointer)
     return true
   }
 
   getMemory(address: number, kind: any) {
     // only for non-array values
+    if (address <= this.stackPointer && address >= this.heapPointer) {
+      throw new Error("segmentation fault")
+    }
     if (kind.pointers == 0 && kind.primitive == 'float') {
       return this.getFloat(address)
     } else {
@@ -90,7 +94,7 @@ export class Memory {
     if (isHeap) {
       this.heapPointer += numElements
     } else {
-      this.stackPointer += numElements
+      this.stackPointer -= numElements
     }
     this.checkHeapSmallerThanStack()
     return address
