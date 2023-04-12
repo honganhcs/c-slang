@@ -162,9 +162,9 @@ export function* evaluateArrayAccessExpression(expression: any, index: any, cont
   const address = expression.address + offset
   const result = dims?.length
     ? {
-      kind: kind,
-      address: address
-    }
+        kind: kind,
+        address: address
+      }
     : context.runtime.memory.getMemory(address, kind)
   return result
 }
