@@ -11,7 +11,7 @@ import {
   VariableDeclarator
 } from 'estree'
 
-import { getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
+import { getCurrentEnvironment, getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
 import { Kind, toKind } from '../types'
 import { actual } from '../utils/astMaps'
@@ -75,7 +75,7 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, object.type)
   // TODO add check for malloc
-  const isHeap = context.getCurrentEnvironment().name === 'global'
+  const isHeap = getCurrentEnvironment(context).name === 'global'
   const address = context.runtime.memory.allocateMemory(value, kind, isHeap)
   updateFrame(frame, name, kind, address)
   return value
