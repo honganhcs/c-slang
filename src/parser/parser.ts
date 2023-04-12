@@ -368,16 +368,11 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
 
     if (ctx.arrayDimension().length != 0) {
       // array
-      // TODO: add check all dimensions except the first are defined
       const elements: Array<es.Expression | es.SpreadElement | null> = [name]
       const dims = ctx.arrayDimension()
       dims.forEach(dim => {
-        if (dim.constantExpression()) {
-          const expressionGenerator = new ExpressionGenerator()
-          elements.push(dim.constantExpression()!.accept(expressionGenerator))
-        } else {
-          elements.push(null)
-        }
+        const expressionGenerator = new ExpressionGenerator()
+        elements.push(dim.constantExpression().accept(expressionGenerator))
       })
 
       obj = {
