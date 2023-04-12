@@ -9,6 +9,12 @@ export const pushCallback = (context: Context, callback: Environment) =>
 export const peekEnvironment = (context: Context) => context.runtime.environments[0]
 export const popEnvironment = (context: Context, id?: string) => {
   if (!id || context.runtime.environments[0].id === id) {
+    const frame = context.runtime.environments[0].head
+    for (const name in frame) {
+      if (context.runtime.memory.freeMemory(frame[name].value)) {
+        break
+      }
+    }
     context.runtime.environments.shift()
   }
 }

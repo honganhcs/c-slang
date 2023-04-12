@@ -128,7 +128,7 @@ directDeclarator
     ;
 
 arrayDimension 
-    : '[' constantExpression? ']'
+    : '[' constantExpression ']'
     ;
 
 pointer

@@ -1,7 +1,7 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { createGlobalEnvironment } from './environment'
-import { Heap } from './heap'
+import { Memory } from './memory'
 import { Context, Environment, Variant } from './types'
 
 const heapWordSize = 10000
@@ -83,7 +83,7 @@ const createEmptyRuntime = () => ({
   callbacks: [],
   value: undefined,
   nodes: [],
-  heap: new Heap(heapWordSize)
+  memory: new Memory(heapWordSize)
 })
 
 export const createEmptyContext = <T>(
