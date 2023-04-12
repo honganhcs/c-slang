@@ -43,7 +43,6 @@ export function* evaluateCallExpression(
       const address = context.runtime.memory.allocateMemory(arg, kind, false)
       updateFrame(frame, name, kind, address)
     }
-
     let result = yield* evaluate(body, context)
     name !== 'main' && (result = evaluateCastExpression(result, kind))
     if (context.prelude === 'return') {

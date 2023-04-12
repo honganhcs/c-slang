@@ -13,7 +13,6 @@ export function* evaluateBlockSatement(node: BlockStatement | Program, context: 
   let result
   for (const statement of node.body) {
     result = yield* evaluate(statement, context)
-
     if (
       context.prelude === 'continue' ||
       context.prelude === 'break' ||

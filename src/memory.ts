@@ -20,11 +20,12 @@ export class Memory {
     } else {
       const address = this.allocate(isHeap)
       if (kind.pointers == 0 && kind.primitive == 'float') {
-        return this.setFloat(address, value)
+        this.setFloat(address, value)
       } else {
         // for pointer, int, char
-        return this.setInt(address, value)
+        this.setInt(address, value)
       }
+      return address
     }
   }
 
