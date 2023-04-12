@@ -59,6 +59,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
+    result = result.address || result
   }
   return result
 }
@@ -149,5 +150,21 @@ export function evaluateCastExpression(value: number, kind: Kind) {
     : kind.primitive === 'float'
     ? value
     : Math.trunc(value)
+  return result
+}
+
+export function* evaluateArrayAccessExpression(expression: any, index: any, context: any) {
+  // TODO: handle actual number of elements < dims[0]
+  const kind = expression.kind as Kind
+  kind.dimensions?.shift()
+  const dims = kind.dimensions
+  const offset = index * (dims?.length ? dims[0] : 1)
+  const address = expression.address + offset
+  const result = dims?.length
+    ? {
+      kind: kind,
+      address: address
+    }
+    : context.runtime.memory.getMemory(address, kind)
   return result
 }

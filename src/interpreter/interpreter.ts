@@ -19,6 +19,7 @@ import {
   evaluateVariableDeclaration
 } from '../evaluators/declarations'
 import {
+  evaluateArrayAccessExpression,
   evaluateArrayExpression,
   evaluateAssignmentExpression,
   evaluateCallExpression,
@@ -128,15 +129,16 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
       throw new Error(`${name} undeclared`)
     }
     const kind = frame[name].kind
-    let value = frame[name].value
-    value = value.body ? value : context.runtime.memory.getMemory(value, kind)
-    const isArray = kind.dimensions
-    return isArray
+    const value = frame[name].value
+    const result = kind.dimensions
       ? {
         kind: kind,
-        value: value
+        address: value
       }
-      : value
+      : value.body
+      ? value
+      : context.runtime.memory.getMemory(value, kind)
+    return result
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
@@ -194,10 +196,9 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
       const kind = toKind(node.property as es.BigIntLiteral)
       return evaluateCastExpression(value, kind)
     } else {
-      // TODO: add check for dimensions
-      const array = yield* actualValue(node.object, context)
+      const expression = yield* actualValue(node.object, context)
       const index = yield* actualValue(node.property, context)
-      return context.runtime.memory.getMemory(array.value + index, array.kind)
+      return yield* evaluateArrayAccessExpression(expression, index, context)
     }
   },
 
