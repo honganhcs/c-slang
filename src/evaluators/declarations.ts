@@ -47,7 +47,7 @@ const declaratorMicrocode = {
     }
     const kind = {
       primitive: k,
-      pointers: p + dimensions.length,
+      pointers: p,
       dimensions: dimensions
     } as Kind
     return [object, kind]

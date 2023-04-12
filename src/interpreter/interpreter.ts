@@ -111,7 +111,8 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   ArrayExpression: function* (node: es.ArrayExpression, context: Context) {
-    return yield* evaluateArrayExpression(node, context)
+    const elements = node.elements
+    return yield* evaluateArrayExpression(elements, context)
   },
 
   FunctionExpression: function* (node: es.FunctionExpression, context: Context) {
@@ -126,12 +127,16 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     if (!frame) {
       throw new Error(`${name} undeclared`)
     }
-    const value = frame[name].value
-    if (value.body) {
-      return value
-    }
     const kind = frame[name].kind
-    return context.runtime.memory.getMemory(value, kind)
+    let value = frame[name].value
+    value = value.body ? value : context.runtime.memory.getMemory(value, kind)
+    const isArray = kind.dimensions
+    return isArray
+      ? {
+        kind: kind,
+        value: value
+      }
+      : value
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
@@ -183,9 +188,17 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   MemberExpression: function* (node: es.MemberExpression, context: Context) {
-    const value = yield* actualValue(node.object, context)
-    const kind = toKind(node.property as es.BigIntLiteral)
-    return evaluateCastExpression(value, kind)
+    const isCast = !node.computed
+    if (isCast) {
+      const value = yield* actualValue(node.object, context)
+      const kind = toKind(node.property as es.BigIntLiteral)
+      return evaluateCastExpression(value, kind)
+    } else {
+      // TODO: add check for dimensions
+      const array = yield* actualValue(node.object, context)
+      const index = yield* actualValue(node.property, context)
+      return context.runtime.memory.getMemory(array.value + index, array.kind)
+    }
   },
 
   VariableDeclaration: function* (node: es.VariableDeclaration, context: Context) {

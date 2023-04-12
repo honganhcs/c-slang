@@ -1,6 +1,6 @@
 import {
-  ArrayExpression,
   AssignmentOperator,
+  Expression,
   MemberExpression,
   Pattern,
   SequenceExpression,
@@ -11,9 +11,12 @@ import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../en
 import { actualValue, evaluate } from '../interpreter/interpreter'
 import { Kind } from '../types'
 
-export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
-  // TODO: handle array access
-  return undefined
+export function* evaluateArrayExpression(elements: Array<any>, context: any) {
+  const value = []
+  for (const element of elements) {
+    value.unshift(yield* actualValue(element as Expression, context))
+  }
+  return value.flat()
 }
 
 export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
@@ -130,14 +133,16 @@ export function* evaluateUpdateExpression(
 export function evaluateCastExpression(value: number, kind: Kind) {
   // (float) [int *] is considered valid in this implementation
   const valueInt = Number.isInteger(value)
-  const valid = !kind.pointers || valueInt
+  const valid = !kind.pointers || kind.dimensions || valueInt
   if (!valid) {
     const prim = kind.primitive.toString()
     const ptr = kind.pointers ? ' ' + '*'.repeat(kind.pointers) : ''
     const type = prim + ptr
     throw new Error(`incompatible types when casting to type ${type}`)
   }
-  const result = valueInt
+  const result = kind.dimensions
+    ? value
+    : valueInt
     ? kind.primitive === 'float'
       ? parseFloat(value.toPrecision(6))
       : value
