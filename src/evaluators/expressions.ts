@@ -152,13 +152,9 @@ export function evaluateCastExpression(value: any, kind: Kind): any {
       result.push(evaluateCastExpression(val, kind))
     }
   } else if (valueInt) {
-    result = kind.primitive === 'float'
-      ? parseFloat(value.toPrecision(6))
-      : value
+    result = kind.primitive === 'float' ? parseFloat(value.toPrecision(6)) : value
   } else {
-    result = kind.primitive === 'float'
-      ? value
-      : Math.trunc(value)
+    result = kind.primitive === 'float' ? value : Math.trunc(value)
   }
   return result
 }
