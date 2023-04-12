@@ -40,7 +40,7 @@ export function* evaluateCallExpression(
       const name = param.name
       const kind = param.kind
       const arg = evaluateCastExpression(args.shift(), kind)
-      const address = context.runtime.heap.allocateMemory(arg, kind)
+      const address = context.runtime.memory.allocateMemory(arg, kind, false)
       updateFrame(frame, name, kind, address)
     }
 
@@ -99,7 +99,7 @@ export function* evaluateAssignmentExpression(
     rhs = evaluateCastExpression(rhs, kind)
     const value = assignmentMicrocode[operator](lhs, rhs)
     const address = frame[name].value
-    context.runtime.heap.setMemory(address, value, kind)
+    context.runtime.memory.setMemory(address, value, kind)
     return value
   }
 }

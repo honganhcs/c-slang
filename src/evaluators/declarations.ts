@@ -74,7 +74,9 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   value && (value = evaluateCastExpression(value, kind))
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, object.type)
-  const address = context.runtime.heap.allocateMemory(value, kind)
+  // TODO add check for malloc
+  const isHeap = context.getCurrentEnvironment().name === 'global'
+  const address = context.runtime.memory.allocateMemory(value, kind, isHeap)
   updateFrame(frame, name, kind, address)
   return value
 }

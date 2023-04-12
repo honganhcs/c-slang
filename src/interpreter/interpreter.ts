@@ -131,7 +131,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
       return value
     }
     const kind = frame[name].kind
-    return context.runtime.heap.getMemory(value, kind)
+    return context.runtime.memory.getMemory(value, kind)
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
@@ -142,7 +142,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     for (const arg of node.arguments) {
       args.push(yield* actualValue(arg, context))
     }
-    
+
     context.prelude = name
     const current = getCurrentEnvironment(context)
     const global = getGlobalEnvironment(context)
@@ -253,7 +253,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     context.prelude = null
     return result
   },
-  
+
   DoWhileStatement: function* (node: es.DoWhileStatement, context: Context) {
     context.prelude = 'do-while'
     const result = yield* evaluateDoWhileStatement(node, context)
