@@ -87,6 +87,12 @@ export class Memory {
     for (let count = 0; count < numElements; count++) {
       this.allocateMemory(arr[count], elementKind, isHeap)
     }
+    if (isHeap) {
+      this.heapPointer += numElements
+    } else {
+      this.stackPointer += numElements
+    }
+    this.checkHeapSmallerThanStack()
     return address
   }
 
