@@ -41,7 +41,7 @@ export class Memory {
   getMemory(address: number, kind: any) {
     // only for non-array values
     if (address <= this.stackPointer && address >= this.heapPointer) {
-      throw new Error("segmentation fault")
+      throw new Error('segmentation fault')
     }
     if (kind.pointers == 0 && kind.primitive == 'float') {
       return this.getFloat(address)
