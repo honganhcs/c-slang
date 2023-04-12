@@ -9,7 +9,7 @@ import { SourceLocation } from 'acorn'
 import * as es from 'estree'
 
 import { EnvTree } from './createContext'
-import { Heap } from './heap'
+import { Memory } from './memory'
 
 /**
  * Defines functions that act as built-ins, but might rely on
@@ -103,7 +103,7 @@ export interface Context<T = any> {
     environments: Environment[]
     callbacks: Environment[]
     nodes: es.Node[]
-    heap: Heap
+    memory: Memory
   }
 
   numberOfOuterEnvironments: number
@@ -388,11 +388,11 @@ export type TypeEnvironment = {
 export interface Kind {
   primitive: 'int' | 'float' | 'char' | 'void'
   pointers: number
-  dimensions?: [number]
+  dimensions?: number[]
 }
 
 export const toKind = (kind: es.BigIntLiteral) =>
-  ({
-    primitive: kind.bigint,
-    pointers: kind.value as unknown as number
-  } as Kind)
+({
+  primitive: kind.bigint,
+  pointers: kind.value as unknown as number
+} as Kind)
