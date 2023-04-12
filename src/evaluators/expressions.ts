@@ -59,7 +59,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
-    result = result.address || result
+    result = result.kind || result
   }
   return result
 }
@@ -91,20 +91,25 @@ export function* evaluateAssignmentExpression(
   right: any,
   context: any
 ) {
-  // TODO: handle non-identifier
-  const name = left.name
-  const lhs = yield* actualValue(left, context)
+  let lhs = yield* actualValue(left, context)
   let rhs = yield* actualValue(right, context)
-  const frame = lookupFrame(context, name)
-  if (frame) {
-    const id = frame[name]
-    const kind = id.kind
-    rhs = evaluateCastExpression(rhs, kind)
-    const value = assignmentMicrocode[operator](lhs, rhs)
-    const address = frame[name].value
-    context.runtime.memory.setMemory(address, value, kind)
-    return value
+  let kind = lhs.kind
+  let address = lhs.address
+  if (kind) {
+    lhs = context.runtime.memory.getMemory(address, kind)
+  } else {
+    const name = left.name
+    const frame = lookupFrame(context, name)
+    if (frame) {
+      const id = frame[name]
+      kind = id.kind
+      address = id.value
+    }
   }
+  rhs = evaluateCastExpression(rhs, kind)
+  const value = assignmentMicrocode[operator](lhs, rhs)
+  context.runtime.memory.setMemory(address, value, kind)
+  return value
 }
 
 const updateMicrocode = {
@@ -118,26 +123,37 @@ export function* evaluateUpdateExpression(
   prefix: any,
   context: any
 ) {
-  // TODO: handle non-identifier
-  const name = argument.name
-  const before = yield* actualValue(argument, context)
-  const after = updateMicrocode[operator](before)
-  const frame = lookupFrame(context, name)
-  if (frame) {
-    const address = frame[name].value
-    const kind = frame[name].kind
-    context.runtime.heap.setMemory(address, after, kind)
-    return prefix ? after : before
+  let before = yield* actualValue(argument, context)
+  let kind = before.kind
+  let address = before.address
+  if (kind) {
+    before = context.runtime.memory.getMemory(address, kind)
+  } else {
+    const name = argument.name
+    const frame = lookupFrame(context, name)
+    if (frame) {
+      const id = frame[name]
+      kind = id.kind
+      address = id.value
+    }
   }
+  const after = updateMicrocode[operator](before)
+  context.runtime.heap.setMemory(address, after, kind)
+  return prefix ? after : before
 }
 
 export function evaluateCastExpression(value: any, kind: Kind): any {
   // (float) [int *] is considered valid in this implementation
   const valueInt = Number.isInteger(value)
-  const valid = !kind.pointers || kind.dimensions || valueInt
+  const valueArr = Array.isArray(value)
+  const valid = !kind.pointers || (kind.dimensions && valueArr) || valueInt
   if (!valid) {
     const prim = kind.primitive.toString()
-    const ptr = kind.pointers ? ' ' + '*'.repeat(kind.pointers) : ''
+    const ptr = kind.pointers
+      ? ' ' + '*'.repeat(kind.pointers)
+      : kind.dimensions
+      ? ' ' + '*'.repeat(kind.dimensions.length)
+      : ''
     const type = prim + ptr
     throw new Error(`incompatible types when casting to type ${type}`)
   }
