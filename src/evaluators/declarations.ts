@@ -75,10 +75,12 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, object.type)
   // TODO: add check for malloc
-  // TODO: check for function definition
+  const isFunc = object.type === 'FunctionExpression'
   const isHeap = getCurrentEnvironment(context).name === 'global'
-  const address = context.runtime.memory.allocateMemory(value, kind, isHeap)
-  updateFrame(frame, name, kind, address)
+  value = isFunc
+    ? value
+    : context.runtime.memory.allocateMemory(value, kind, isHeap)
+  updateFrame(frame, name, kind, value)
   return value
 }
 

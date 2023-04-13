@@ -94,7 +94,7 @@ function* handleLeftExpression(expression: Expression, context: any) {
     const object = yield* evaluateArrayAccessExpression(expr, index, context, true)
     kind = object.kind
     address = object.address
-    value = context.runtime.memory.getMemory(address, kind)    
+    value = context.runtime.memory.getMemory(address, kind)
   }
   return {
     kind: kind,
