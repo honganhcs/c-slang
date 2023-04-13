@@ -151,7 +151,7 @@ const toNumber = (value: number | boolean): number =>
   typeof value === 'number' ? value : value ? 1 : 0
 
 const unaryMicrocode = {
-  '&': (a: any) => a.kind ? a.address : a,
+  '&': (a: any) => (a.kind ? a.address : a),
   '*': (a: any) => ({
     kind: a.kind,
     address: a.address,
@@ -164,13 +164,14 @@ const unaryMicrocode = {
 
 export function evaluateUnaryExpression(operator: UnaryOperator, argument: any, context: any) {
   const op = actual['unary'](operator)
-  const value = op === '+' || op === '-' || op === '-'
-    ? argument.kind
+  const value =
+    op === '+' || op === '-' || op === '-'
+      ? argument.kind
         ? argument.kind.dimensions?.length
           ? argument.address
           : context.runtime.memory.getMemory(argument.address, argument.kind)
         : argument
-    : argument
+      : argument
   return unaryMicrocode[op](value, context)
 }
 
