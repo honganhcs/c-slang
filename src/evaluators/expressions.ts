@@ -136,8 +136,8 @@ const updateMicrocode = {
 
 export function* evaluateUpdateExpression(
   operator: UpdateOperator,
-  argument: any,
-  prefix: any,
+  argument: Expression,
+  prefix: boolean,
   context: any
 ) {
   let before = yield* handleLeftExpression(argument, context)
