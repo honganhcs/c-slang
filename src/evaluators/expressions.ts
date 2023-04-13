@@ -12,6 +12,24 @@ import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../en
 import { actualValue, evaluate } from '../interpreter/interpreter'
 import { Kind } from '../types'
 
+export function evaluateIdentifer(name: any, context: any, isDeref?: boolean) {
+  const frame = lookupFrame(context, name)
+  if (!frame) {
+    throw new Error(`${name} undeclared`)
+  }
+  const kind = frame[name].kind
+  const value = frame[name].value
+  const result = kind.dimensions
+    ? {
+      kind: kind,
+      address: value
+    }
+    : value.body || isDeref
+    ? value
+    : context.runtime.memory.getMemory(value, kind)
+  return result
+}
+
 export function* evaluateArrayExpression(elements: Array<any>, context: any) {
   const value = []
   for (const element of elements) {
@@ -65,7 +83,7 @@ export function* evaluateCallExpression(
       context.prelude = null
     }
   } else {
-    return builtinMicrocode[name](args, context)
+    result = builtinMicrocode[name](args, context)
   }
   return result
 }

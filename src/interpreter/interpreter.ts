@@ -26,6 +26,7 @@ import {
   evaluateCastExpression,
   evaluateConditionalExpression,
   evaluateFunctionExpression,
+  evaluateIdentifer,
   evaluateSequenceExpression,
   evaluateUpdateExpression
 } from '../evaluators/expressions'
@@ -123,22 +124,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   Identifier: function* (node: es.Identifier, context: Context) {
-    const name = node.name
-    const frame = lookupFrame(context, name)
-    if (!frame) {
-      throw new Error(`${name} undeclared`)
-    }
-    const kind = frame[name].kind
-    const value = frame[name].value
-    const result = kind.dimensions
-      ? {
-        kind: kind,
-        address: value
-      }
-      : value.body
-      ? value
-      : context.runtime.memory.getMemory(value, kind)
-    return result
+    return evaluateIdentifer(node.name, context)
   },
 
   CallExpression: function* (node: es.CallExpression, context: Context) {
@@ -169,8 +155,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
-    const argument = yield* actualValue(node.argument, context)
-    return evaluateUnaryExpression(node.operator, argument, context)
+    return yield* evaluateUnaryExpression(node.operator, node.argument, context)
   },
 
   BinaryExpression: function* (node: es.BinaryExpression, context: Context) {

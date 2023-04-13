@@ -15,6 +15,7 @@ import * as create from '../utils/astCreator'
 import { actual } from '../utils/astMaps'
 import { makeWrapper } from '../utils/makeWrapper'
 import * as rttc from '../utils/rttc'
+import { evaluateIdentifer } from './expressions'
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
@@ -162,16 +163,19 @@ const unaryMicrocode = {
   '!': (a: any) => !a
 }
 
-export function evaluateUnaryExpression(operator: UnaryOperator, argument: any, context: any) {
+export function* evaluateUnaryExpression(operator: UnaryOperator, argument: any, context: any) {
   const op = actual['unary'](operator)
+  const arg = op === '&' && argument.type === 'Identifier'
+      ? evaluateIdentifer(argument.name, context, true)
+      : yield* actualValue(argument, context)
   const value =
     op === '+' || op === '-' || op === '-'
-      ? argument.kind
-        ? argument.kind.dimensions?.length
-          ? argument.address
-          : context.runtime.memory.getMemory(argument.address, argument.kind)
-        : argument
-      : argument
+      ? arg.kind
+        ? arg.kind.dimensions?.length
+          ? arg.address
+          : context.runtime.memory.getMemory(arg.address, arg.kind)
+        : arg
+      : arg
   return unaryMicrocode[op](value, context)
 }
 
