@@ -14,6 +14,14 @@ export class Memory {
     this.stackPointer = this.size - 1
   }
 
+  malloc(size: number) {
+    const address = this.heapPointer
+    this.setInt(address, address + 1)
+    this.heapPointer += size + 1
+    this.checkHeapSmallerThanStack()
+    return address
+  }
+
   allocateMemory(value: any, kind: any, isHeap: boolean) {
     if (kind.dimensions) {
       return this.allocateArray(value, kind, isHeap)
