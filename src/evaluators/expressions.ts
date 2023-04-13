@@ -91,15 +91,15 @@ function* handleLeftExpression(expression: Expression, context: any) {
   } else {
     const expr = yield* actualValue(expression.object, context)
     const index = yield* actualValue(expression.property, context)
-    value = yield* evaluateArrayAccessExpression(expr, index, context, true)
-    value = context.runtime.memory.getMemory(address, kind)
-    kind = value.kind
-    address = value.address
+    const object = yield* evaluateArrayAccessExpression(expr, index, context, true)
+    kind = object.kind
+    address = object.address
+    value = context.runtime.memory.getMemory(address, kind)    
   }
   return {
-    value: value,
     kind: kind,
-    address: address
+    address: address,
+    value: value
   }
 }
 
