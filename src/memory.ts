@@ -34,7 +34,6 @@ export class Memory {
       return false
     }
     this.stackPointer = address
-    console.log('free memory at ' + this.stackPointer)
     return true
   }
 
