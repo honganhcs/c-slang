@@ -91,9 +91,9 @@ export class Memory {
       this.allocateMemory(arr[count], elementKind, isHeap)
     }
     if (isHeap) {
-      this.heapPointer += numElements
+      this.heapPointer = address + numElements
     } else {
-      this.stackPointer -= numElements
+      this.stackPointer = address - numElements
     }
     this.checkHeapSmallerThanStack()
     return address
