@@ -88,8 +88,7 @@ function* handleLeftExpression(expression: Expression, context: any) {
       kind = id.kind
       address = id.value
     }
-  }
-  else { // arr[0][1]
+  } else {
     const expr = yield* actualValue(expression.object, context)
     const index = yield* actualValue(expression.property, context)
     value = yield* evaluateArrayAccessExpression(expr, index, context, true)
@@ -183,18 +182,24 @@ export function evaluateCastExpression(value: any, kind: Kind): any {
   return result
 }
 
-export function* evaluateArrayAccessExpression(expression: any, index: any, context: any, isObject?: boolean) {
+export function* evaluateArrayAccessExpression(
+  expression: any,
+  index: any,
+  context: any,
+  isObject?: boolean
+) {
   // TODO: handle actual number of elements < dims[0]
   const kind = expression.kind as Kind
   kind.dimensions?.shift()
   const dims = kind.dimensions
   const offset = index * (dims?.length ? dims[0] : 1)
   const address = expression.address + offset
-  const result = dims?.length || isObject
-    ? {
-        kind: kind,
-        address: address
-      }
-    : context.runtime.memory.getMemory(address, kind)
+  const result =
+    dims?.length || isObject
+      ? {
+          kind: kind,
+          address: address
+        }
+      : context.runtime.memory.getMemory(address, kind)
   return result
 }
