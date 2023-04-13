@@ -188,7 +188,6 @@ export function* evaluateArrayAccessExpression(
   context: any,
   isObject?: boolean
 ) {
-  // TODO: handle actual number of elements < dims[0]
   const kind = expression.kind as Kind
   kind.dimensions?.shift()
   const dims = kind.dimensions
