@@ -1,6 +1,7 @@
 import {
   AssignmentOperator,
   Expression,
+  Identifier,
   MemberExpression,
   Pattern,
   SequenceExpression,
@@ -76,6 +77,33 @@ export function* evaluateConditionalExpression(
   return result
 }
 
+function* handleLeftExpression(expression: Expression, context: any) {
+  let kind, address, value
+  if (expression.type !== 'MemberExpression') {
+    value = yield* actualValue(expression, context)
+    const name = (expression as Identifier).name
+    const frame = lookupFrame(context, name)
+    if (frame) {
+      const id = frame[name]
+      kind = id.kind
+      address = id.value
+    }
+  }
+  else { // arr[0][1]
+    const expr = yield* actualValue(expression.object, context)
+    const index = yield* actualValue(expression.property, context)
+    value = yield* evaluateArrayAccessExpression(expr, index, context, true)
+    value = context.runtime.memory.getMemory(address, kind)
+    kind = value.kind
+    address = value.address
+  }
+  return {
+    value: value,
+    kind: kind,
+    address: address
+  }
+}
+
 const assignmentMicrocode = {
   '=': (l: any, r: any) => r,
   '+=': (l: any, r: any) => l + r,
@@ -87,25 +115,15 @@ const assignmentMicrocode = {
 
 export function* evaluateAssignmentExpression(
   operator: AssignmentOperator,
-  left: any,
-  right: any,
+  left: Pattern | MemberExpression,
+  right: Expression,
   context: any
 ) {
-  let lhs = yield* actualValue(left, context)
+  let lhs = yield* handleLeftExpression(left as Expression, context)
+  lhs = lhs.value
+  const kind = lhs.kind
+  const address = lhs.address
   let rhs = yield* actualValue(right, context)
-  let kind = lhs.kind
-  let address = lhs.address
-  if (kind) {
-    lhs = context.runtime.memory.getMemory(address, kind)
-  } else {
-    const name = left.name
-    const frame = lookupFrame(context, name)
-    if (frame) {
-      const id = frame[name]
-      kind = id.kind
-      address = id.value
-    }
-  }
   rhs = evaluateCastExpression(rhs, kind)
   const value = assignmentMicrocode[operator](lhs, rhs)
   context.runtime.memory.setMemory(address, value, kind)
@@ -123,20 +141,10 @@ export function* evaluateUpdateExpression(
   prefix: any,
   context: any
 ) {
-  let before = yield* actualValue(argument, context)
-  let kind = before.kind
-  let address = before.address
-  if (kind) {
-    before = context.runtime.memory.getMemory(address, kind)
-  } else {
-    const name = argument.name
-    const frame = lookupFrame(context, name)
-    if (frame) {
-      const id = frame[name]
-      kind = id.kind
-      address = id.value
-    }
-  }
+  let before = yield* handleLeftExpression(argument, context)
+  before = before.value
+  const kind = before.kind
+  const address = before.address
   const after = updateMicrocode[operator](before)
   context.runtime.heap.setMemory(address, after, kind)
   return prefix ? after : before
@@ -175,14 +183,14 @@ export function evaluateCastExpression(value: any, kind: Kind): any {
   return result
 }
 
-export function* evaluateArrayAccessExpression(expression: any, index: any, context: any) {
+export function* evaluateArrayAccessExpression(expression: any, index: any, context: any, isObject?: boolean) {
   // TODO: handle actual number of elements < dims[0]
   const kind = expression.kind as Kind
   kind.dimensions?.shift()
   const dims = kind.dimensions
   const offset = index * (dims?.length ? dims[0] : 1)
   const address = expression.address + offset
-  const result = dims?.length
+  const result = dims?.length || isObject
     ? {
         kind: kind,
         address: address
