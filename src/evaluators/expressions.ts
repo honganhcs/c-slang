@@ -145,7 +145,7 @@ export function* evaluateUpdateExpression(
   const address = object.address
   const before = object.value
   const after = updateMicrocode[operator](before)
-  context.runtime.heap.setMemory(address, after, kind)
+  context.runtime.memory.setMemory(address, after, kind)
   return prefix ? after : before
 }
 
