@@ -5,7 +5,6 @@ import {
   extendEnvironment,
   getCurrentEnvironment,
   getGlobalEnvironment,
-  lookupFrame,
   peekCallback,
   peekEnvironment,
   popCallback,

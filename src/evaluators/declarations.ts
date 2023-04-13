@@ -16,7 +16,7 @@ import { actualValue } from '../interpreter/interpreter'
 import { Kind, toKind } from '../types'
 import { actual } from '../utils/astMaps'
 import { validateDeclarator, validateFunction } from '../validator/validator'
-import { evaluateCastExpression } from './expressions'
+import { evaluateCastExpression, evaluateTypedExpression } from './expressions'
 
 export function* evaluateVariableDeclaration(node: VariableDeclaration, context: any) {
   const kind = actual['kind'](node.kind)
@@ -64,17 +64,32 @@ const declaratorMicrocode = {
 
 function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, context: any) {
   const id = node.id as MemberExpression
+  const init = node.init
   const object = id.object
   const pointer = (id.property as Literal).value
-  const props = yield* declaratorMicrocode[object.type](object, type, pointer, context)
+  const idType = object.type
+  const props = yield* declaratorMicrocode[idType](object, type, pointer, context)
   const name = (props[0] as Identifier).name
-  const kind = props[1]
-  const init = node.init
-  let value = init ? yield* actualValue(init as Expression, context) : undefined
+  let kind = props[1]
+  let value = init ? yield* evaluateTypedExpression(init as Expression, context) : undefined
+  if (value?.kind) {
+    const decPtrs = kind.pointers
+    const initDims = value.kind.dimensions
+    if (decPtrs && initDims) {
+      kind = {
+        primitive: kind.primitive,
+        pointers: kind.pointers,
+        dimensions: initDims
+      } as Kind
+    }
+    value = value.isValue
+      ? context.runtime.memory.getMemory(value.address, value.kind)
+      : value.address
+  }
   value && (value = evaluateCastExpression(value, kind))
   const frame = getCurrentFrame(context)
-  validateDeclarator(frame, name, kind, value, object.type)
-  const isFunc = object.type === 'FunctionExpression'
+  validateDeclarator(frame, name, kind, value, idType)
+  const isFunc = idType === 'FunctionExpression'
   const isHeap = getCurrentEnvironment(context).name === 'global'
   value = isFunc ? value : context.runtime.memory.allocateMemory(value, kind, isHeap)
   updateFrame(frame, name, kind, value)

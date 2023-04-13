@@ -179,6 +179,10 @@ export function validateArray(frame: Frame, name: any, kind: any, value: any) {
     } else if (obj.value !== undefined && value !== undefined) {
       throw new Error(`redefinition of '${name}'`)
     }
+  } else {
+    if (!Array.isArray(value)) {
+      throw new Error(`invalid initializer`)
+    }
   }
 }
 
