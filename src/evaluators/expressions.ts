@@ -60,7 +60,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
-    result = result.kind || result
+    result = result.kind ? result.address : result
   }
   return result
 }
@@ -171,7 +171,7 @@ export function evaluateCastExpression(value: any, kind: Kind): any {
       primitive: kind.primitive,
       pointers: kind.pointers
     } as Kind
-    for (const val in value) {
+    for (const val of value) {
       result.push(evaluateCastExpression(val, kind))
     }
   } else if (valueInt) {
