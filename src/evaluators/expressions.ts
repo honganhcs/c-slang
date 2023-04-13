@@ -188,8 +188,12 @@ export function* evaluateArrayAccessExpression(
   context: any,
   isObject?: boolean
 ) {
-  const kind = expression.kind as Kind
-  kind.dimensions?.shift()
+  let kind = expression.kind as Kind
+  kind = {
+    primitive: kind.primitive,
+    pointers: kind.pointers,
+    dimensions: kind.dimensions?.slice(1)
+  } as Kind
   const dims = kind.dimensions
   const offset = index * (dims?.length ? dims[0] : 1)
   const address = expression.address + offset
