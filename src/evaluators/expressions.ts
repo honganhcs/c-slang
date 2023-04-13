@@ -12,19 +12,19 @@ import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../en
 import { actualValue, evaluate } from '../interpreter/interpreter'
 import { Kind } from '../types'
 
-export function evaluateIdentifer(name: any, context: any, isDeref?: boolean) {
+export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) {
   const frame = lookupFrame(context, name)
   if (!frame) {
     throw new Error(`${name} undeclared`)
   }
   const kind = frame[name].kind
   const value = frame[name].value
-  const result = kind.dimensions
+  const result = kind.dimensions || isAddress
     ? {
-      kind: kind,
-      address: value
-    }
-    : value.body || isDeref
+        kind: kind,
+        address: value
+      }
+    : value.body
     ? value
     : context.runtime.memory.getMemory(value, kind)
   return result

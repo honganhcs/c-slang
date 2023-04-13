@@ -165,7 +165,8 @@ const unaryMicrocode = {
 
 export function* evaluateUnaryExpression(operator: UnaryOperator, argument: any, context: any) {
   const op = actual['unary'](operator)
-  const arg = op === '&' && argument.type === 'Identifier'
+  const arg =
+    op === '&' && argument.type === 'Identifier'
       ? evaluateIdentifer(argument.name, context, true)
       : yield* actualValue(argument, context)
   const value =
