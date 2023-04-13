@@ -122,7 +122,7 @@ export function* evaluateUpdateExpression(
   if (frame) {
     const address = frame[name].value
     const kind = frame[name].kind
-    context.runtime.heap.setMemory(address, after, kind)
+    context.runtime.memory.setMemory(address, after, kind)
     return prefix ? after : before
   }
 }

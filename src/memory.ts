@@ -39,6 +39,9 @@ export class Memory {
 
   getMemory(address: number, kind: any) {
     // only for non-array values
+    if (address <= this.stackPointer && address >= this.heapPointer) {
+      throw new Error('segmentation fault')
+    }
     if (kind.pointers == 0 && kind.primitive == 'float') {
       return this.getFloat(address)
     } else {
@@ -87,6 +90,12 @@ export class Memory {
     for (let count = 0; count < numElements; count++) {
       this.allocateMemory(arr[count], elementKind, isHeap)
     }
+    if (isHeap) {
+      this.heapPointer += numElements
+    } else {
+      this.stackPointer -= numElements
+    }
+    this.checkHeapSmallerThanStack()
     return address
   }
 

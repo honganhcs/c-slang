@@ -4,7 +4,7 @@ import { createGlobalEnvironment } from './environment'
 import { Memory } from './memory'
 import { Context, Environment, Variant } from './types'
 
-const heapWordSize = 10000
+const memoryWordSize = 10000
 
 export class LazyBuiltIn {
   func: (...arg0: any) => any
@@ -83,7 +83,7 @@ const createEmptyRuntime = () => ({
   callbacks: [],
   value: undefined,
   nodes: [],
-  memory: new Memory(heapWordSize)
+  memory: new Memory(memoryWordSize)
 })
 
 export const createEmptyContext = <T>(
