@@ -2,22 +2,22 @@ const wordSize = 4
 
 export class Memory {
   private memory: DataView
-  private size: number
+  private memorySize: number
   private heapPointer: number
   private stackPointer: number
 
   constructor(words: number) {
     const data = new ArrayBuffer(words * wordSize)
     this.memory = new DataView(data)
-    this.size = words
+    this.memorySize = words
     this.heapPointer = 0
-    this.stackPointer = this.size - 1
+    this.stackPointer = this.memorySize - 1
   }
 
   malloc(size: number) {
+    size = size < 0 ? size + this.memorySize : size
     const address = this.heapPointer
-    this.setInt(address, address + 1)
-    this.heapPointer += size + 1
+    this.heapPointer += size
     this.checkHeapSmallerThanStack()
     return address
   }
