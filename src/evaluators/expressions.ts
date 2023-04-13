@@ -118,10 +118,10 @@ export function* evaluateAssignmentExpression(
   right: Expression,
   context: any
 ) {
-  let lhs = yield* handleLeftExpression(left as Expression, context)
-  lhs = lhs.value
-  const kind = lhs.kind
-  const address = lhs.address
+  const object = yield* handleLeftExpression(left as Expression, context)
+  const kind = object.kind
+  const address = object.address
+  const lhs = object.value
   let rhs = yield* actualValue(right, context)
   rhs = evaluateCastExpression(rhs, kind)
   const value = assignmentMicrocode[operator](lhs, rhs)
@@ -140,10 +140,10 @@ export function* evaluateUpdateExpression(
   prefix: boolean,
   context: any
 ) {
-  let before = yield* handleLeftExpression(argument, context)
-  before = before.value
-  const kind = before.kind
-  const address = before.address
+  const object = yield* handleLeftExpression(argument, context)
+  const kind = object.kind
+  const address = object.address
+  const before = object.value
   const after = updateMicrocode[operator](before)
   context.runtime.heap.setMemory(address, after, kind)
   return prefix ? after : before
@@ -153,19 +153,19 @@ export function evaluateCastExpression(value: any, kind: Kind): any {
   // (float) [int *] is considered valid in this implementation
   const valueInt = Number.isInteger(value)
   const valueArr = Array.isArray(value)
-  const valid = !kind.pointers || (kind.dimensions && valueArr) || valueInt
+  const valid = !kind.pointers || (kind.dimensions?.length && valueArr) || valueInt
   if (!valid) {
     const prim = kind.primitive.toString()
     const ptr = kind.pointers
       ? ' ' + '*'.repeat(kind.pointers)
-      : kind.dimensions
+      : kind.dimensions?.length
       ? ' ' + '*'.repeat(kind.dimensions.length)
       : ''
     const type = prim + ptr
     throw new Error(`incompatible types when casting to type ${type}`)
   }
   let result
-  if (kind.dimensions) {
+  if (kind.dimensions?.length) {
     result = []
     kind = {
       primitive: kind.primitive,
