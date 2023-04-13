@@ -152,11 +152,14 @@ const toNumber = (value: number | boolean): number =>
   typeof value === 'number' ? value : value ? 1 : 0
 
 const unaryMicrocode = {
-  '&': (a: any) => (a.kind ? {
-    kind: a.kind,
-    address: a.address,
-    isValue: false
-  } : a),
+  '&': (a: any) =>
+    a.kind
+      ? {
+          kind: a.kind,
+          address: a.address,
+          isValue: false
+        }
+      : a,
   '*': (a: any) => ({
     kind: a.kind,
     address: a.address,
