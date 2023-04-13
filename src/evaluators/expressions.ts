@@ -19,14 +19,15 @@ export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) 
   }
   const kind = frame[name].kind
   const value = frame[name].value
-  const result = kind.dimensions || isAddress
-    ? {
-        kind: kind,
-        address: value
-      }
-    : value.body
-    ? value
-    : context.runtime.memory.getMemory(value, kind)
+  const result =
+    kind.dimensions || isAddress
+      ? {
+          kind: kind,
+          address: value
+        }
+      : value.body
+      ? value
+      : context.runtime.memory.getMemory(value, kind)
   return result
 }
 
