@@ -1,4 +1,4 @@
-import { BinaryOperator, LogicalOperator, UnaryOperator } from 'estree'
+import { BinaryOperator, Expression, LogicalOperator, UnaryOperator } from 'estree'
 
 import { LazyBuiltIn } from '../createContext'
 import {
@@ -15,7 +15,7 @@ import * as create from '../utils/astCreator'
 import { actual } from '../utils/astMaps'
 import { makeWrapper } from '../utils/makeWrapper'
 import * as rttc from '../utils/rttc'
-import { evaluateIdentifer } from './expressions'
+import { evaluateArrayAccessExpression, evaluateIdentifer } from './expressions'
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
@@ -163,12 +163,30 @@ const unaryMicrocode = {
   '!': (a: any) => !a
 }
 
-export function* evaluateUnaryExpression(operator: UnaryOperator, argument: any, context: any) {
+export function* evaluateUnaryExpression(operator: UnaryOperator, argument: Expression, context: any) {
   const op = actual['unary'](operator)
-  const arg =
-    op === '&' && argument.type === 'Identifier'
-      ? evaluateIdentifer(argument.name, context, true)
-      : yield* actualValue(argument, context)
+  const type = argument.type
+  let arg
+  if (op === '&') {
+    const isAddress = true
+    if (type === 'Identifier') {
+      arg = evaluateIdentifer(argument.name, context, isAddress)
+    } else if (type === 'MemberExpression' && argument.computed) {
+      const expr = yield* actualValue(argument.object, context)
+      const index = yield* actualValue(argument.property, context)
+      const object = yield* evaluateArrayAccessExpression(expr, index, context, isAddress)
+      const kind = object.kind
+      const address = object.address
+      const value = context.runtime.memory.getMemory(address, kind)
+      arg = {
+        kind: kind,
+        address: address,
+        value: value
+      }
+    }
+  } else {
+    arg = yield* actualValue(argument, context)
+  }
   const value =
     op === '+' || op === '-' || op === '-'
       ? arg.kind

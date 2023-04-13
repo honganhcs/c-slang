@@ -20,7 +20,7 @@ export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) 
   const kind = frame[name].kind
   const value = frame[name].value
   const result =
-    kind.dimensions || isAddress
+    kind.pointers || kind.dimensions || isAddress
       ? {
           kind: kind,
           address: value
@@ -95,7 +95,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
     result = yield* evaluate(expression, context)
     result = result.kind
       ? result.isValue
-        ? context.runtime.memory.getMemory(result.address)
+        ? context.runtime.memory.getMemory(result.address, result.kind)
         : result.address
       : result
   }
@@ -126,9 +126,10 @@ function* evaluateLeftExpression(expression: Expression, context: any) {
       address = id.value
     }
   } else {
+    const isAddress = true
     const expr = yield* actualValue(expression.object, context)
     const index = yield* actualValue(expression.property, context)
-    const object = yield* evaluateArrayAccessExpression(expr, index, context, true)
+    const object = yield* evaluateArrayAccessExpression(expr, index, context, isAddress)
     kind = object.kind
     address = object.address
     value = context.runtime.memory.getMemory(address, kind)
@@ -223,7 +224,7 @@ export function* evaluateArrayAccessExpression(
   expression: any,
   index: any,
   context: any,
-  isObject?: boolean
+  isAddress?: boolean
 ) {
   let kind = expression.kind as Kind
   kind = {
@@ -235,7 +236,7 @@ export function* evaluateArrayAccessExpression(
   const offset = index * (dims?.length ? dims[0] : 1)
   const address = expression.address + offset
   const result =
-    dims?.length || isObject
+    dims?.length || isAddress
       ? {
           kind: kind,
           address: address
