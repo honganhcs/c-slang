@@ -36,6 +36,7 @@ export function* evaluateCallExpression(
   args: any,
   context: any
 ) {
+  let result
   const global = getGlobalFrame(context)
   if (global && global[name]) {
     const kind = global[name].kind
@@ -44,16 +45,23 @@ export function* evaluateCallExpression(
       const name = param.name
       const kind = param.kind
       const arg = evaluateCastExpression(args.shift(), kind)
-      const address = context.runtime.memory.allocateMemory(arg, kind, false)
-      updateFrame(frame, name, kind, address)
+      const value = context.runtime.memory.allocateMemory(arg, kind, false)
+      updateFrame(frame, name, kind, value)
     }
-    let result = yield* evaluate(body, context)
+    result = yield* evaluate(body, context)
     name !== 'main' && (result = evaluateCastExpression(result, kind))
     if (context.prelude === 'return') {
       context.prelude = null
     }
-    return result
+  } else if (name === 'malloc') {
+    const kind = {
+      primitive: 'int',
+      pointers: 0
+    } as Kind
+    const size = evaluateCastExpression(params[0], kind)
+    result = context.runtime.memory.malloc(size)
   }
+  return result
 }
 
 export function* evaluateSequenceExpression(node: SequenceExpression, context: any) {
@@ -77,7 +85,7 @@ export function* evaluateConditionalExpression(
   return result
 }
 
-function* handleLeftExpression(expression: Expression, context: any) {
+function* evaluateLeftExpression(expression: Expression, context: any) {
   let kind, address, value
   if (expression.type !== 'MemberExpression') {
     value = yield* actualValue(expression, context)
@@ -118,7 +126,7 @@ export function* evaluateAssignmentExpression(
   right: Expression,
   context: any
 ) {
-  const object = yield* handleLeftExpression(left as Expression, context)
+  const object = yield* evaluateLeftExpression(left as Expression, context)
   const kind = object.kind
   const address = object.address
   const lhs = object.value
@@ -140,7 +148,7 @@ export function* evaluateUpdateExpression(
   prefix: boolean,
   context: any
 ) {
-  const object = yield* handleLeftExpression(argument, context)
+  const object = yield* evaluateLeftExpression(argument, context)
   const kind = object.kind
   const address = object.address
   const before = object.value
