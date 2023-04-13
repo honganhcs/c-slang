@@ -163,7 +163,11 @@ const unaryMicrocode = {
   '!': (a: any) => !a
 }
 
-export function* evaluateUnaryExpression(operator: UnaryOperator, argument: Expression, context: any) {
+export function* evaluateUnaryExpression(
+  operator: UnaryOperator,
+  argument: Expression,
+  context: any
+) {
   const op = actual['unary'](operator)
   const type = argument.type
   let arg
