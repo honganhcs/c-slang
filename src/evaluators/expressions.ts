@@ -29,6 +29,17 @@ export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
   return value
 }
 
+const builtinMicrocode = {
+  'malloc': (a: any, c: any) => {
+    const kind = {
+      primitive: 'int',
+      pointers: 0
+    } as Kind
+    const size = evaluateCastExpression(a[0], kind)
+    return c.runtime.memory.malloc(size)
+  }
+}
+
 export function* evaluateCallExpression(
   name: any,
   params: any,
@@ -53,13 +64,8 @@ export function* evaluateCallExpression(
     if (context.prelude === 'return') {
       context.prelude = null
     }
-  } else if (name === 'malloc') {
-    const kind = {
-      primitive: 'int',
-      pointers: 0
-    } as Kind
-    const size = evaluateCastExpression(params[0], kind)
-    result = context.runtime.memory.malloc(size)
+  } else {
+    return builtinMicrocode[name](args, context)
   }
   return result
 }
