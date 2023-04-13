@@ -16,8 +16,7 @@ export class Memory {
 
   malloc(size: number) {
     const address = this.heapPointer
-    this.setInt(address, address + 1)
-    this.heapPointer += size + 1
+    this.heapPointer += size
     this.checkHeapSmallerThanStack()
     return address
   }
