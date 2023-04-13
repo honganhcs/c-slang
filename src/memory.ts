@@ -87,9 +87,9 @@ export class Memory {
     // the layout of allocated memory does not follow array layout when
     // the array has less number of elements than its maximum size
     this.checkHeapSmallerThanStack()
-    let numElements = 1
-    kind.dimensions.forEach((dim: number) => (numElements *= dim))
-    numElements = arr.length <= numElements ? arr.length : numElements
+    let maxElements = 1
+    kind.dimensions.forEach((dim: number) => (maxElements *= dim))
+    const numElements = arr.length <= maxElements ? arr.length : maxElements
     const elementKind = {
       primitive: kind.primitive,
       pointers: kind.pointers
@@ -99,9 +99,9 @@ export class Memory {
       this.allocateMemory(arr[count], elementKind, isHeap)
     }
     if (isHeap) {
-      this.heapPointer = address + numElements
+      this.heapPointer = address + maxElements
     } else {
-      this.stackPointer = address - numElements
+      this.stackPointer = address - maxElements
     }
     this.checkHeapSmallerThanStack()
     return address
