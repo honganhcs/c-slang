@@ -30,7 +30,7 @@ export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
 }
 
 const builtinMicrocode = {
-  'malloc': (a: any, c: any) => {
+  malloc: (a: any, c: any) => {
     const kind = {
       primitive: 'int',
       pointers: 0
@@ -74,7 +74,11 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
-    result = result.kind ? result.address : result
+    result = result.kind
+      ? result.isValue
+        ? context.runtime.memory.getMemory(result.address)
+        : result.address
+      : result
   }
   return result
 }

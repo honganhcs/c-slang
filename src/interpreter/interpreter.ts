@@ -169,8 +169,8 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
   },
 
   UnaryExpression: function* (node: es.UnaryExpression, context: Context) {
-    const value = yield* actualValue(node.argument, context)
-    return evaluateUnaryExpression(node.operator, value)
+    const argument = yield* actualValue(node.argument, context)
+    return evaluateUnaryExpression(node.operator, argument, context)
   },
 
   BinaryExpression: function* (node: es.BinaryExpression, context: Context) {

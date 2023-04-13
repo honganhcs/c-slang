@@ -127,7 +127,13 @@ export function boolOrErr(candidate: any, line: number, column: number) {
   }
 }
 
-export function unaryOp(operator: UnaryOperator, argument: any, line: number, column: number) {
+export function unaryOp(
+  operator: UnaryOperator,
+  argument: any,
+  context: any,
+  line: number,
+  column: number
+) {
   argument = forceIt(argument)
   const error = rttc.checkUnaryExpression(
     create.locationDummyNode(line, column),
@@ -135,7 +141,7 @@ export function unaryOp(operator: UnaryOperator, argument: any, line: number, co
     argument
   )
   if (error === undefined) {
-    return evaluateUnaryExpression(operator, argument)
+    return evaluateUnaryExpression(operator, argument, context)
   } else {
     throw error
   }
@@ -145,17 +151,27 @@ const toNumber = (value: number | boolean): number =>
   typeof value === 'number' ? value : value ? 1 : 0
 
 const unaryMicrocode = {
-  // TODO: handle & and *
-  '&': (v: any) => v,
-  '*': (v: any) => v,
-  '+': (v: any) => +v,
-  '-': (v: any) => -v,
-  '!': (v: any) => !v
+  '&': (a: any) => a.kind ? a.address : a,
+  '*': (a: any) => ({
+    kind: a.kind,
+    address: a.address,
+    isValue: true
+  }),
+  '+': (a: any) => +a,
+  '-': (a: any) => -a,
+  '!': (a: any) => !a
 }
 
-export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
+export function evaluateUnaryExpression(operator: UnaryOperator, argument: any, context: any) {
   const op = actual['unary'](operator)
-  return unaryMicrocode[op](value)
+  const value = op === '+' || op === '-' || op === '-'
+    ? argument.kind
+        ? argument.kind.dimensions?.length
+          ? argument.address
+          : context.runtime.memory.getMemory(argument.address, argument.kind)
+        : argument
+    : argument
+  return unaryMicrocode[op](value, context)
 }
 
 export function binaryOp(
