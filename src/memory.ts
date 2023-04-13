@@ -38,7 +38,6 @@ export class Memory {
   }
 
   getMemory(address: number, kind: any) {
-    // only for non-array values
     if (address <= this.stackPointer && address >= this.heapPointer) {
       throw new Error('segmentation fault')
     }
@@ -50,7 +49,6 @@ export class Memory {
   }
 
   setMemory(address: number, value: any, kind: any) {
-    // only for non-array values
     if (kind.pointers == 0 && kind.primitive == 'float') {
       this.setFloat(address, value)
     } else {
@@ -78,6 +76,8 @@ export class Memory {
   }
 
   private allocateArray(arr: any, kind: any, isHeap: boolean) {
+    // the layout of allocated memory does not follow array layout when
+    // the array has less number of elements than its maximum size
     this.checkHeapSmallerThanStack()
     let numElements = 1
     kind.dimensions.forEach((dim: number) => (numElements *= dim))

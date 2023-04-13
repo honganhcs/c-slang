@@ -968,7 +968,6 @@ export function parse(source: string, context: Context) {
     try {
       const tree = parser.program()
       program = convertSource(tree)
-      console.log(program)
     } catch (error) {
       if (error instanceof FatalSyntaxError) {
         context.errors.push(error)

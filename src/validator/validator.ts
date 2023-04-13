@@ -172,8 +172,14 @@ export function validateIdentifier(frame: Frame, name: any, kind: any, value: an
 }
 
 export function validateArray(frame: Frame, name: any, kind: any, value: any) {
-  // TODO: validate array
-  return undefined
+  const obj = frame[name]
+  if (obj) {
+    if (obj.kind !== kind) {
+      throw new Error(`conflicting types for '${name}'`)
+    } else if (obj.value !== undefined && value !== undefined) {
+      throw new Error(`redefinition of '${name}'`)
+    }
+  }
 }
 
 export function validateFunction(frame: Frame, name: any, kind: any, value: any) {
@@ -186,10 +192,12 @@ export function validateFunction(frame: Frame, name: any, kind: any, value: any)
     } else if (obj.value.params.length !== value.params.length) {
       throw new Error(`number of arguments doesn't match prototype`)
     } else {
-      for (const param of obj.value.params) {
-        const pre = param.property as es.BigIntLiteral
-        const cur = kind as es.BigIntLiteral
-        if (pre.bigint !== cur.bigint || pre.value !== cur.value) {
+      const decs = obj.value.params
+      const defs = value.params
+      for (let i = 0; i < decs.length; i++) {
+        const dec = decs[i].kind
+        const def = defs[i].kind
+        if (dec === def) {
           throw new Error(`conflicting types for '${name}'`)
         }
       }

@@ -1,6 +1,7 @@
 import {
-  ArrayExpression,
   AssignmentOperator,
+  Expression,
+  Identifier,
   MemberExpression,
   Pattern,
   SequenceExpression,
@@ -11,9 +12,12 @@ import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../en
 import { actualValue, evaluate } from '../interpreter/interpreter'
 import { Kind } from '../types'
 
-export function* evaluateArrayExpression(node: ArrayExpression, context: any) {
-  // TODO: handle array access
-  return undefined
+export function* evaluateArrayExpression(elements: Array<any>, context: any) {
+  const value = []
+  for (const element of elements) {
+    value.unshift(yield* actualValue(element as Expression, context))
+  }
+  return value.flat()
 }
 
 export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
@@ -56,6 +60,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
+    result = result.kind ? result.address : result
   }
   return result
 }
@@ -72,6 +77,32 @@ export function* evaluateConditionalExpression(
   return result
 }
 
+function* handleLeftExpression(expression: Expression, context: any) {
+  let kind, address, value
+  if (expression.type !== 'MemberExpression') {
+    value = yield* actualValue(expression, context)
+    const name = (expression as Identifier).name
+    const frame = lookupFrame(context, name)
+    if (frame) {
+      const id = frame[name]
+      kind = id.kind
+      address = id.value
+    }
+  } else {
+    const expr = yield* actualValue(expression.object, context)
+    const index = yield* actualValue(expression.property, context)
+    const object = yield* evaluateArrayAccessExpression(expr, index, context, true)
+    kind = object.kind
+    address = object.address
+    value = context.runtime.memory.getMemory(address, kind)
+  }
+  return {
+    kind: kind,
+    address: address,
+    value: value
+  }
+}
+
 const assignmentMicrocode = {
   '=': (l: any, r: any) => r,
   '+=': (l: any, r: any) => l + r,
@@ -83,24 +114,19 @@ const assignmentMicrocode = {
 
 export function* evaluateAssignmentExpression(
   operator: AssignmentOperator,
-  left: any,
-  right: any,
+  left: Pattern | MemberExpression,
+  right: Expression,
   context: any
 ) {
-  // TODO: handle non-identifier
-  const name = left.name
-  const lhs = yield* actualValue(left, context)
+  const object = yield* handleLeftExpression(left as Expression, context)
+  const kind = object.kind
+  const address = object.address
+  const lhs = object.value
   let rhs = yield* actualValue(right, context)
-  const frame = lookupFrame(context, name)
-  if (frame) {
-    const id = frame[name]
-    const kind = id.kind
-    rhs = evaluateCastExpression(rhs, kind)
-    const value = assignmentMicrocode[operator](lhs, rhs)
-    const address = frame[name].value
-    context.runtime.memory.setMemory(address, value, kind)
-    return value
-  }
+  rhs = evaluateCastExpression(rhs, kind)
+  const value = assignmentMicrocode[operator](lhs, rhs)
+  context.runtime.memory.setMemory(address, value, kind)
+  return value
 }
 
 const updateMicrocode = {
@@ -110,39 +136,73 @@ const updateMicrocode = {
 
 export function* evaluateUpdateExpression(
   operator: UpdateOperator,
-  argument: any,
-  prefix: any,
+  argument: Expression,
+  prefix: boolean,
   context: any
 ) {
-  // TODO: handle non-identifier
-  const name = argument.name
-  const before = yield* actualValue(argument, context)
+  const object = yield* handleLeftExpression(argument, context)
+  const kind = object.kind
+  const address = object.address
+  const before = object.value
   const after = updateMicrocode[operator](before)
-  const frame = lookupFrame(context, name)
-  if (frame) {
-    const address = frame[name].value
-    const kind = frame[name].kind
-    context.runtime.memory.setMemory(address, after, kind)
-    return prefix ? after : before
-  }
+  context.runtime.memory.setMemory(address, after, kind)
+  return prefix ? after : before
 }
 
-export function evaluateCastExpression(value: number, kind: Kind) {
+export function evaluateCastExpression(value: any, kind: Kind): any {
   // (float) [int *] is considered valid in this implementation
   const valueInt = Number.isInteger(value)
-  const valid = !kind.pointers || valueInt
+  const valueArr = Array.isArray(value)
+  const valid = !kind.pointers || (kind.dimensions?.length && valueArr) || valueInt
   if (!valid) {
     const prim = kind.primitive.toString()
-    const ptr = kind.pointers ? ' ' + '*'.repeat(kind.pointers) : ''
+    const ptr = kind.pointers
+      ? ' ' + '*'.repeat(kind.pointers)
+      : kind.dimensions?.length
+      ? ' ' + '*'.repeat(kind.dimensions.length)
+      : ''
     const type = prim + ptr
     throw new Error(`incompatible types when casting to type ${type}`)
   }
-  const result = valueInt
-    ? kind.primitive === 'float'
-      ? parseFloat(value.toPrecision(6))
-      : value
-    : kind.primitive === 'float'
-    ? value
-    : Math.trunc(value)
+  let result
+  if (kind.dimensions?.length) {
+    result = []
+    kind = {
+      primitive: kind.primitive,
+      pointers: kind.pointers
+    } as Kind
+    for (const val of value) {
+      result.push(evaluateCastExpression(val, kind))
+    }
+  } else if (valueInt) {
+    result = kind.primitive === 'float' ? parseFloat(value.toPrecision(6)) : value
+  } else {
+    result = kind.primitive === 'float' ? value : Math.trunc(value)
+  }
+  return result
+}
+
+export function* evaluateArrayAccessExpression(
+  expression: any,
+  index: any,
+  context: any,
+  isObject?: boolean
+) {
+  let kind = expression.kind as Kind
+  kind = {
+    primitive: kind.primitive,
+    pointers: kind.pointers,
+    dimensions: kind.dimensions?.slice(1)
+  } as Kind
+  const dims = kind.dimensions
+  const offset = index * (dims?.length ? dims[0] : 1)
+  const address = expression.address + offset
+  const result =
+    dims?.length || isObject
+      ? {
+          kind: kind,
+          address: address
+        }
+      : context.runtime.memory.getMemory(address, kind)
   return result
 }
