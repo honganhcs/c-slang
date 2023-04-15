@@ -72,7 +72,7 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const name = (props[0] as Identifier).name
   const kind = props[1]
   let value = init ? yield* evaluateTypedExpression(init as Expression, context) : undefined
-  isChar(value, kind) && (value = toAscii(value))
+  isChar(kind, value) && (value = toAscii(value))
   value?.kind && (value = getValue(value))
   value && (value = evaluateCastExpression(value, kind))
   const frame = getCurrentFrame(context)
