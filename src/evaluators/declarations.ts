@@ -73,15 +73,6 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   let kind = props[1]
   let value = init ? yield* evaluateTypedExpression(init as Expression, context) : undefined
   if (value?.kind) {
-    const decPtrs = kind.pointers
-    const initDims = value.kind.dimensions
-    if (decPtrs && initDims) {
-      kind = {
-        primitive: kind.primitive,
-        pointers: kind.pointers,
-        dimensions: initDims
-      } as Kind
-    }
     value = value.isValue
       ? context.runtime.memory.getMemory(value.address, value.kind)
       : value.address
