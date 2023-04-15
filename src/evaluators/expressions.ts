@@ -1,7 +1,6 @@
 import {
   AssignmentOperator,
   Expression,
-  Identifier,
   MemberExpression,
   Pattern,
   SequenceExpression,
@@ -10,7 +9,26 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { Kind } from '../types'
+import { getValue, Kind } from '../types'
+
+export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) {
+  const frame = lookupFrame(context, name)
+  if (!frame) {
+    throw new Error(`${name} undeclared`)
+  }
+  const kind = frame[name].kind
+  const value = frame[name].value
+  const result =
+    kind.pointers || kind.dimensions || isAddress
+      ? {
+          kind: kind,
+          address: value
+        }
+      : value.body
+      ? value
+      : context.runtime.memory.getMemory(value, kind)
+  return result
+}
 
 export function* evaluateArrayExpression(elements: Array<any>, context: any) {
   const value = []
@@ -29,6 +47,17 @@ export function evaluateFunctionExpression(params: Array<Pattern>, body: any) {
   return value
 }
 
+const builtinMicrocode = {
+  malloc: (a: any, c: any) => {
+    const kind = {
+      primitive: 'int',
+      pointers: 0
+    } as Kind
+    const size = evaluateCastExpression(a[0], kind)
+    return c.runtime.memory.malloc(size)
+  }
+}
+
 export function* evaluateCallExpression(
   name: any,
   params: any,
@@ -36,6 +65,7 @@ export function* evaluateCallExpression(
   args: any,
   context: any
 ) {
+  let result
   const global = getGlobalFrame(context)
   if (global && global[name]) {
     const kind = global[name].kind
@@ -44,23 +74,25 @@ export function* evaluateCallExpression(
       const name = param.name
       const kind = param.kind
       const arg = evaluateCastExpression(args.shift(), kind)
-      const address = context.runtime.memory.allocateMemory(arg, kind, false)
-      updateFrame(frame, name, kind, address)
+      const value = context.runtime.memory.allocateMemory(arg, kind, false)
+      updateFrame(frame, name, kind, value)
     }
-    let result = yield* evaluate(body, context)
+    result = yield* evaluate(body, context)
     name !== 'main' && (result = evaluateCastExpression(result, kind))
     if (context.prelude === 'return') {
       context.prelude = null
     }
-    return result
+  } else {
+    result = builtinMicrocode[name](args, context)
   }
+  return result
 }
 
 export function* evaluateSequenceExpression(node: SequenceExpression, context: any) {
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
-    result = result.kind ? result.address : result
+    result = result.kind ? getValue(result) : result
   }
   return result
 }
@@ -77,30 +109,40 @@ export function* evaluateConditionalExpression(
   return result
 }
 
-function* handleLeftExpression(expression: Expression, context: any) {
-  let kind, address, value
-  if (expression.type !== 'MemberExpression') {
-    value = yield* actualValue(expression, context)
-    const name = (expression as Identifier).name
+export function* evaluateTypedExpression(expression: Expression, context: any) {
+  let result
+  if (expression.type === 'Identifier') {
+    let kind, address
+    const value = yield* actualValue(expression, context)
+    const name = expression.name
     const frame = lookupFrame(context, name)
     if (frame) {
       const id = frame[name]
       kind = id.kind
       address = id.value
     }
-  } else {
+    result = {
+      kind: kind,
+      address: address,
+      value: getValue(value)
+    }
+  } else if (expression.type === 'MemberExpression') {
+    const isAddress = true
     const expr = yield* actualValue(expression.object, context)
     const index = yield* actualValue(expression.property, context)
-    const object = yield* evaluateArrayAccessExpression(expr, index, context, true)
-    kind = object.kind
-    address = object.address
-    value = context.runtime.memory.getMemory(address, kind)
+    const object = yield* evaluateArrayAccessExpression(expr, index, context, isAddress)
+    const kind = object.kind
+    const address = object.address
+    const value = context.runtime.memory.getMemory(address, kind)
+    result = {
+      kind: kind,
+      address: address,
+      value: value
+    }
+  } else {
+    result = yield* actualValue(expression, context)
   }
-  return {
-    kind: kind,
-    address: address,
-    value: value
-  }
+  return result
 }
 
 const assignmentMicrocode = {
@@ -118,10 +160,16 @@ export function* evaluateAssignmentExpression(
   right: Expression,
   context: any
 ) {
-  const object = yield* handleLeftExpression(left as Expression, context)
+  const object = yield* evaluateTypedExpression(left as Expression, context)
   const kind = object.kind
-  const address = object.address
-  const lhs = object.value
+  let address, lhs
+  if (object.dest) {
+    address = object.dest
+    lhs = context.runtime.memory.getMemory(address, kind)
+  } else {
+    address = object.address
+    lhs = object.value
+  }
   let rhs = yield* actualValue(right, context)
   rhs = evaluateCastExpression(rhs, kind)
   const value = assignmentMicrocode[operator](lhs, rhs)
@@ -140,10 +188,16 @@ export function* evaluateUpdateExpression(
   prefix: boolean,
   context: any
 ) {
-  const object = yield* handleLeftExpression(argument, context)
+  const object = yield* evaluateTypedExpression(argument, context)
   const kind = object.kind
-  const address = object.address
-  const before = object.value
+  let address, before
+  if (object.dest) {
+    address = object.dest
+    before = context.runtime.memory.getMemory(address, kind)
+  } else {
+    address = object.address
+    before = object.value
+  }
   const after = updateMicrocode[operator](before)
   context.runtime.memory.setMemory(address, after, kind)
   return prefix ? after : before
@@ -186,19 +240,19 @@ export function* evaluateArrayAccessExpression(
   expression: any,
   index: any,
   context: any,
-  isObject?: boolean
+  isAddress?: boolean
 ) {
-  let kind = expression.kind as Kind
-  kind = {
-    primitive: kind.primitive,
-    pointers: kind.pointers,
-    dimensions: kind.dimensions?.slice(1)
+  const refKind = expression.kind as Kind
+  const kind = {
+    primitive: refKind.primitive,
+    pointers: refKind.pointers,
+    dimensions: refKind.dimensions?.slice(1)
   } as Kind
   const dims = kind.dimensions
   const offset = index * (dims?.length ? dims[0] : 1)
   const address = expression.address + offset
   const result =
-    dims?.length || isObject
+    dims?.length || isAddress
       ? {
           kind: kind,
           address: address

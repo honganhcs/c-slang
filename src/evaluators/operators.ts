@@ -1,4 +1,4 @@
-import { BinaryOperator, LogicalOperator, UnaryOperator } from 'estree'
+import { BinaryOperator, Expression, LogicalOperator, UnaryOperator } from 'estree'
 
 import { LazyBuiltIn } from '../createContext'
 import {
@@ -9,12 +9,13 @@ import {
 } from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { actualValue } from '../interpreter/interpreter'
-import { Thunk } from '../types'
+import { getValue, Thunk } from '../types'
 import { locationDummyNode } from '../utils/astCreator'
 import * as create from '../utils/astCreator'
 import { actual } from '../utils/astMaps'
 import { makeWrapper } from '../utils/makeWrapper'
 import * as rttc from '../utils/rttc'
+import { evaluateArrayAccessExpression, evaluateIdentifer } from './expressions'
 
 export function forceIt(val: Thunk | any): any {
   if (val !== undefined && val !== null && val.isMemoized !== undefined) {
@@ -127,7 +128,13 @@ export function boolOrErr(candidate: any, line: number, column: number) {
   }
 }
 
-export function unaryOp(operator: UnaryOperator, argument: any, line: number, column: number) {
+export function unaryOp(
+  operator: UnaryOperator,
+  argument: any,
+  context: any,
+  line: number,
+  column: number
+) {
   argument = forceIt(argument)
   const error = rttc.checkUnaryExpression(
     create.locationDummyNode(line, column),
@@ -135,7 +142,7 @@ export function unaryOp(operator: UnaryOperator, argument: any, line: number, co
     argument
   )
   if (error === undefined) {
-    return evaluateUnaryExpression(operator, argument)
+    return evaluateUnaryExpression(operator, argument, context)
   } else {
     throw error
   }
@@ -145,17 +152,60 @@ const toNumber = (value: number | boolean): number =>
   typeof value === 'number' ? value : value ? 1 : 0
 
 const unaryMicrocode = {
-  // TODO: handle & and *
-  '&': (v: any) => v,
-  '*': (v: any) => v,
-  '+': (v: any) => +v,
-  '-': (v: any) => -v,
-  '!': (v: any) => !v
+  '&': (a: any, c: any) =>
+    a.kind
+      ? {
+          kind: a.kind,
+          address: a.address
+        }
+      : a,
+  '*': (a: any, c: any) => ({
+    kind: a.kind,
+    address: a.address,
+    dest: c.runtime.memory.getMemory(getValue(a), a.kind)
+  }),
+  '+': (a: any) => +a,
+  '-': (a: any) => -a,
+  '!': (a: any) => !a
 }
 
-export function evaluateUnaryExpression(operator: UnaryOperator, value: any) {
+export function* evaluateUnaryExpression(
+  operator: UnaryOperator,
+  argument: Expression,
+  context: any
+) {
   const op = actual['unary'](operator)
-  return unaryMicrocode[op](value)
+  const type = argument.type
+  let arg
+  if (op === '&') {
+    const isAddress = true
+    if (type === 'Identifier') {
+      arg = evaluateIdentifer(argument.name, context, isAddress)
+    } else if (type === 'MemberExpression' && argument.computed) {
+      const expr = yield* actualValue(argument.object, context)
+      const index = yield* actualValue(argument.property, context)
+      const object = yield* evaluateArrayAccessExpression(expr, index, context, isAddress)
+      const kind = object.kind
+      const address = object.address
+      const value = context.runtime.memory.getMemory(address, kind)
+      arg = {
+        kind: kind,
+        address: address,
+        value: value
+      }
+    }
+  } else {
+    arg = yield* actualValue(argument, context)
+  }
+  const value =
+    op === '+' || op === '-' || op === '-'
+      ? arg.kind
+        ? arg.kind.dimensions?.length
+          ? arg.address
+          : context.runtime.memory.getMemory(arg.address, arg.kind)
+        : arg
+      : arg
+  return unaryMicrocode[op](value, context)
 }
 
 export function binaryOp(
