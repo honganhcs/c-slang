@@ -402,7 +402,10 @@ export const toAscii = (char: string) => char.charCodeAt(1)
 export const toChar = (charCode: number) => String.fromCharCode(charCode)
 
 export const isChar = (kind: Kind, value: any) =>
-  typeof value === 'string' && (kind.primitive === 'char' && !kind.pointers && !kind.dimensions?.length)
+  typeof value === 'string' &&
+  kind.primitive === 'char' &&
+  !kind.pointers &&
+  !kind.dimensions?.length
 
 export const getValue = (object: any) =>
   object.dest === undefined ? object.value || object.address : object.dest
