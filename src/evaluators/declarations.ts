@@ -13,7 +13,7 @@ import {
 
 import { getCurrentEnvironment, getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
-import { getValue, Kind, toKind } from '../types'
+import { getValue, isChar, Kind, toAscii, toKind } from '../types'
 import { actual } from '../utils/astMaps'
 import { validateDeclarator, validateFunction } from '../validator/validator'
 import { evaluateCastExpression, evaluateTypedExpression } from './expressions'
@@ -72,6 +72,7 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const name = (props[0] as Identifier).name
   const kind = props[1]
   let value = init ? yield* evaluateTypedExpression(init as Expression, context) : undefined
+  isChar(value, kind) && (value = toAscii(value))
   value?.kind && (value = getValue(value))
   value && (value = evaluateCastExpression(value, kind))
   const frame = getCurrentFrame(context)
