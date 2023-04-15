@@ -9,7 +9,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { Kind, getValue } from '../types'
+import { getValue, Kind } from '../types'
 
 export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) {
   const frame = lookupFrame(context, name)
@@ -92,9 +92,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   let result
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
-    result = result.kind
-      ? getValue(result)
-      : result
+    result = result.kind ? getValue(result) : result
   }
   return result
 }

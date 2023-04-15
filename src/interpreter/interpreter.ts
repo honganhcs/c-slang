@@ -275,7 +275,11 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
 // tslint:enable:object-literal-shorthand
 
 export function* evaluate(node: es.Node, context: Context) {
-  const result = yield* evaluators[node.type](node, context)
-  yield* leave(context)
-  return result
+  try {
+    const result = yield* evaluators[node.type](node, context)
+    yield* leave(context)
+    return result
+  } catch (error) {
+    console.log(`${error.name}: ${error.message}\n${error.stack}`)
+  }
 }

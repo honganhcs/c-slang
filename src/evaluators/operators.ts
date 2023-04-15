@@ -9,7 +9,7 @@ import {
 } from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { actualValue } from '../interpreter/interpreter'
-import { Thunk, getValue } from '../types'
+import { getValue, Thunk } from '../types'
 import { locationDummyNode } from '../utils/astCreator'
 import * as create from '../utils/astCreator'
 import { actual } from '../utils/astMaps'
@@ -162,7 +162,7 @@ const unaryMicrocode = {
   '*': (a: any, c: any) => ({
     kind: a.kind,
     address: a.address,
-    dest: c.runtime.memory.getMemory(getValue(a), a.kind),
+    dest: c.runtime.memory.getMemory(getValue(a), a.kind)
   }),
   '+': (a: any) => +a,
   '-': (a: any) => -a,

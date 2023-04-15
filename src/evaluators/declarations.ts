@@ -13,7 +13,7 @@ import {
 
 import { getCurrentEnvironment, getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
-import { Kind, getValue, toKind } from '../types'
+import { getValue, Kind, toKind } from '../types'
 import { actual } from '../utils/astMaps'
 import { validateDeclarator, validateFunction } from '../validator/validator'
 import { evaluateCastExpression, evaluateTypedExpression } from './expressions'

@@ -398,6 +398,4 @@ export const toKind = (kind: es.BigIntLiteral) =>
   } as Kind)
 
 export const getValue = (object: any) =>
-  object.dest === undefined
-    ? object.value || object.address
-    : object.dest
+  object.dest === undefined ? object.value || object.address : object.dest
