@@ -13,7 +13,7 @@ import {
 
 import { getCurrentEnvironment, getCurrentFrame, getGlobalFrame, updateFrame } from '../environment'
 import { actualValue } from '../interpreter/interpreter'
-import { Kind, toKind } from '../types'
+import { Kind, getValue, toKind } from '../types'
 import { actual } from '../utils/astMaps'
 import { validateDeclarator, validateFunction } from '../validator/validator'
 import { evaluateCastExpression, evaluateTypedExpression } from './expressions'
@@ -70,20 +70,16 @@ function* evaluateVariableDeclarator(node: VariableDeclarator, type: any, contex
   const idType = object.type
   const props = yield* declaratorMicrocode[idType](object, type, pointer, context)
   const name = (props[0] as Identifier).name
-  let kind = props[1]
+  const kind = props[1]
   let value = init ? yield* evaluateTypedExpression(init as Expression, context) : undefined
-  if (value?.kind) {
-    value = value.isValue
-      ? context.runtime.memory.getMemory(value.address, value.kind)
-      : value.address
-  }
+  value?.kind && (value = getValue(value))
   value && (value = evaluateCastExpression(value, kind))
   const frame = getCurrentFrame(context)
   validateDeclarator(frame, name, kind, value, idType)
   const isFunc = idType === 'FunctionExpression'
   const isHeap = getCurrentEnvironment(context).name === 'global'
-  value = isFunc ? value : context.runtime.memory.allocateMemory(value, kind, isHeap)
-  updateFrame(frame, name, kind, value)
+  const address = isFunc ? value : context.runtime.memory.allocateMemory(value, kind, isHeap)
+  updateFrame(frame, name, kind, address)
   return value
 }
 

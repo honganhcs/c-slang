@@ -9,7 +9,7 @@ import {
 } from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { actualValue } from '../interpreter/interpreter'
-import { Thunk } from '../types'
+import { Thunk, getValue } from '../types'
 import { locationDummyNode } from '../utils/astCreator'
 import * as create from '../utils/astCreator'
 import { actual } from '../utils/astMaps'
@@ -152,18 +152,17 @@ const toNumber = (value: number | boolean): number =>
   typeof value === 'number' ? value : value ? 1 : 0
 
 const unaryMicrocode = {
-  '&': (a: any) =>
+  '&': (a: any, c: any) =>
     a.kind
       ? {
           kind: a.kind,
-          address: a.address,
-          isValue: false
+          address: a.address
         }
       : a,
-  '*': (a: any) => ({
+  '*': (a: any, c: any) => ({
     kind: a.kind,
     address: a.address,
-    isValue: true
+    dest: c.runtime.memory.getMemory(getValue(a), a.kind),
   }),
   '+': (a: any) => +a,
   '-': (a: any) => -a,

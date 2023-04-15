@@ -9,7 +9,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { Kind } from '../types'
+import { Kind, getValue } from '../types'
 
 export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) {
   const frame = lookupFrame(context, name)
@@ -93,9 +93,7 @@ export function* evaluateSequenceExpression(node: SequenceExpression, context: a
   for (const expression of node.expressions) {
     result = yield* evaluate(expression, context)
     result = result.kind
-      ? result.isValue
-        ? context.runtime.memory.getMemory(result.address, result.kind)
-        : result.address
+      ? getValue(result)
       : result
   }
   return result
@@ -128,7 +126,7 @@ export function* evaluateTypedExpression(expression: Expression, context: any) {
     result = {
       kind: kind,
       address: address,
-      value: value
+      value: getValue(value)
     }
   } else if (expression.type === 'MemberExpression') {
     const isAddress = true
@@ -165,11 +163,10 @@ export function* evaluateAssignmentExpression(
   context: any
 ) {
   const object = yield* evaluateTypedExpression(left as Expression, context)
-  const isValue = object.isValue
   const kind = object.kind
   let address, lhs
-  if (isValue) {
-    address = context.runtime.memory.getMemory(object.address, kind)
+  if (object.dest) {
+    address = object.dest
     lhs = context.runtime.memory.getMemory(address, kind)
   } else {
     address = object.address
@@ -195,8 +192,14 @@ export function* evaluateUpdateExpression(
 ) {
   const object = yield* evaluateTypedExpression(argument, context)
   const kind = object.kind
-  const address = object.address
-  const before = object.value
+  let address, before
+  if (object.dest) {
+    address = object.dest
+    before = context.runtime.memory.getMemory(address, kind)
+  } else {
+    address = object.address
+    before = object.value
+  }
   const after = updateMicrocode[operator](before)
   context.runtime.memory.setMemory(address, after, kind)
   return prefix ? after : before

@@ -396,3 +396,8 @@ export const toKind = (kind: es.BigIntLiteral) =>
     primitive: kind.bigint,
     pointers: kind.value as unknown as number
   } as Kind)
+
+export const getValue = (object: any) =>
+  object.dest === undefined
+    ? object.value || object.address
+    : object.dest
