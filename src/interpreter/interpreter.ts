@@ -132,7 +132,7 @@ export const evaluators: { [nodeType: string]: Evaluator<es.Node> } = {
     const value = yield* actualValue(callee, context)
     const args = []
     for (const arg of node.arguments) {
-      args.push(yield* actualValue(arg, context))
+      args.unshift(yield* actualValue(arg, context))
     }
 
     context.prelude = name
