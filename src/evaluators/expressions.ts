@@ -222,7 +222,7 @@ export function evaluateCastExpression(value: any, kind: Kind): any {
     throw new Error(`incompatible types when casting to type ${type}`)
   }
   let result
-  if (kind.dimensions?.length) {
+  if (kind.dimensions?.length && valueArr) {
     result = []
     kind = {
       primitive: kind.primitive,
