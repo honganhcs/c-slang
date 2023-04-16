@@ -1,5 +1,6 @@
 import {
   AssignmentOperator,
+  BigIntLiteral,
   Expression,
   MemberExpression,
   Pattern,
@@ -9,7 +10,7 @@ import {
 
 import { getCurrentFrame, getGlobalFrame, lookupFrame, updateFrame } from '../environment'
 import { actualValue, evaluate } from '../interpreter/interpreter'
-import { getValue, Kind } from '../types'
+import { getValue, Kind, toKind } from '../types'
 
 export function evaluateIdentifer(name: any, context: any, isAddress?: boolean) {
   const frame = lookupFrame(context, name)
@@ -126,7 +127,7 @@ export function* evaluateTypedExpression(expression: Expression, context: any) {
       address: address,
       value: getValue(value)
     }
-  } else if (expression.type === 'MemberExpression') {
+  } else if (expression.type === 'MemberExpression' && expression.computed) {
     const isAddress = true
     const expr = yield* actualValue(expression.object, context)
     const index = yield* actualValue(expression.property, context)
