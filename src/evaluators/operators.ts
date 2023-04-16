@@ -155,9 +155,9 @@ const unaryMicrocode = {
   '&': (a: any, c: any) =>
     a.kind
       ? {
-        kind: a.kind,
-        address: a.address
-      }
+          kind: a.kind,
+          address: a.address
+        }
       : a,
   '*': (a: any, c: any) => ({
     kind: a.kind,
