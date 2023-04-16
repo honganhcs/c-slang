@@ -155,14 +155,14 @@ const unaryMicrocode = {
   '&': (a: any, c: any) =>
     a.kind
       ? {
-          kind: a.kind,
-          address: a.address
-        }
+        kind: a.kind,
+        address: a.address
+      }
       : a,
   '*': (a: any, c: any) => ({
     kind: a.kind,
     address: a.address,
-    dest: c.runtime.memory.getMemory(getValue(a), a.kind)
+    dest: a.kind.pointers > 1 ? c.runtime.memory.getMemory(getValue(a), a.kind) : getValue(a)
   }),
   '+': (a: any) => +a,
   '-': (a: any) => -a,
