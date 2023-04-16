@@ -163,12 +163,12 @@ export function* evaluateAssignmentExpression(
   const object = yield* evaluateTypedExpression(left as Expression, context)
   const kind = object.kind
   let address, lhs
-  if (object.dest) {
-    address = object.dest
-    lhs = context.runtime.memory.getMemory(address, kind)
-  } else {
+  if (object.dest === undefined) {
     address = object.address
     lhs = object.value
+  } else {
+    address = object.dest
+    lhs = context.runtime.memory.getMemory(address, kind)
   }
   let rhs = yield* actualValue(right, context)
   rhs = evaluateCastExpression(rhs, kind)
@@ -191,12 +191,12 @@ export function* evaluateUpdateExpression(
   const object = yield* evaluateTypedExpression(argument, context)
   const kind = object.kind
   let address, before
-  if (object.dest) {
-    address = object.dest
-    before = context.runtime.memory.getMemory(address, kind)
-  } else {
+  if (object.dest === undefined) {
     address = object.address
     before = object.value
+  } else {
+    address = object.dest
+    before = context.runtime.memory.getMemory(address, kind)
   }
   const after = updateMicrocode[operator](before)
   context.runtime.memory.setMemory(address, after, kind)

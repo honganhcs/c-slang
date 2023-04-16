@@ -408,4 +408,8 @@ export const isChar = (kind: Kind, value: any) =>
   !kind.dimensions?.length
 
 export const getValue = (object: any) =>
-  object.dest === undefined ? object.value || object.address : object.dest
+  object.kind
+    ? object.dest === undefined
+      ? object.value || object.address
+      : object.dest
+    : object
