@@ -31,7 +31,6 @@ import { ParameterTypeListContext } from './CParser'
 import { ParameterListContext } from './CParser'
 import { ParameterDeclarationContext } from './CParser'
 import { ParameterDeclaratorContext } from './CParser'
-import { ParameterDirectDeclaratorContext } from './CParser'
 import { IdentifierListContext } from './CParser'
 import { TypeNameContext } from './CParser'
 import { InitializerContext } from './CParser'
@@ -259,13 +258,6 @@ export interface CVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitParameterDeclarator?: (ctx: ParameterDeclaratorContext) => Result
-
-  /**
-   * Visit a parse tree produced by `CParser.parameterDirectDeclarator`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitParameterDirectDeclarator?: (ctx: ParameterDirectDeclaratorContext) => Result
 
   /**
    * Visit a parse tree produced by `CParser.identifierList`.

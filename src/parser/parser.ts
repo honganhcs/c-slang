@@ -893,15 +893,12 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
       if (paramDeclarator.pointer()) {
         numPointers += paramDeclarator.pointer()!.Star().length
       }
-      if (paramDeclarator.parameterDirectDeclarator().arrayDimension()) {
-        numPointers += paramDeclarator.parameterDirectDeclarator().arrayDimension().length
-      }
     }
     const declarator: es.Identifier = {
       type: 'Identifier',
       name:
         ctx.parameterDeclarator()?.text != undefined
-          ? ctx.parameterDeclarator()!.parameterDirectDeclarator().Identifier().text
+          ? ctx.parameterDeclarator()!.Identifier().text
           : ''
     }
     return {

@@ -94,7 +94,11 @@ export class Memory {
       primitive: kind.primitive,
       pointers: kind.pointers
     }
-    const address = isHeap ? this.heapPointer : this.stackPointer
+    const address: number = this.allocateMemory(
+      isHeap ? this.heapPointer + 1 : this.stackPointer - 1,
+      { primitive: 'int', pointers: 0 },
+      isHeap
+    )
     for (let count = 0; count < numElements; count++) {
       this.allocateMemory(arr[count], elementKind, isHeap)
     }
@@ -103,6 +107,7 @@ export class Memory {
     } else {
       this.stackPointer = address - maxElements
     }
+
     this.checkHeapSmallerThanStack()
     return address
   }
