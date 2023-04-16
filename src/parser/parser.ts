@@ -372,7 +372,7 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
       const dims = ctx.arrayDimension()
       dims.forEach(dim => {
         const expressionGenerator = new ExpressionGenerator()
-        elements.push(dim.constantExpression().accept(expressionGenerator))
+        elements.push(dim.constantExpression()!.accept(expressionGenerator))
       })
 
       obj = {
