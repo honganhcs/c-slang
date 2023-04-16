@@ -96,7 +96,7 @@ export class DisallowedConstructError implements SourceError {
 export class FatalSyntaxError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation, public message: string) {}
+  public constructor(public location: es.SourceLocation, public message: string) { }
 
   public explain() {
     return this.message
@@ -110,7 +110,7 @@ export class FatalSyntaxError implements SourceError {
 export class MissingSemicolonError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Missing semicolon at the end of statement'
@@ -124,7 +124,7 @@ export class MissingSemicolonError implements SourceError {
 export class TrailingCommaError implements SourceError {
   public type: ErrorType.SYNTAX
   public severity: ErrorSeverity.WARNING
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Trailing comma'
@@ -372,7 +372,7 @@ class DeclaratorGenerator implements CVisitor<es.VariableDeclarator> {
       const dims = ctx.arrayDimension()
       dims.forEach(dim => {
         const expressionGenerator = new ExpressionGenerator()
-        elements.push(dim.constantExpression().accept(expressionGenerator))
+        elements.push(dim.constantExpression()!.accept(expressionGenerator))
       })
 
       obj = {
@@ -968,6 +968,7 @@ export function parse(source: string, context: Context) {
     try {
       const tree = parser.program()
       program = convertSource(tree)
+      console.log(program)
     } catch (error) {
       if (error instanceof FatalSyntaxError) {
         context.errors.push(error)
