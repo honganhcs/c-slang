@@ -50,11 +50,11 @@ export const getGlobalEnvironment = (context: Context): Environment => {
   return global
     ? global
     : {
-      tail: null,
-      name: 'invalid',
-      head: {},
-      id: '-1'
-    }
+        tail: null,
+        name: 'invalid',
+        head: {},
+        id: '-1'
+      }
 }
 
 export const getCurrentFrame = (context: Context): Frame => {
