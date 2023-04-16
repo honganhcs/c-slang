@@ -74,7 +74,9 @@ export function* evaluateCallExpression(
     for (const param of params) {
       const name = param.name
       const kind = param.kind
-      const arg = evaluateCastExpression(args.shift(), kind)
+      let arg = args.shift()
+      arg.kind && (arg = getValue(arg))
+      arg = evaluateCastExpression(arg, kind)
       const value = context.runtime.memory.allocateMemory(arg, kind, false)
       updateFrame(frame, name, kind, value)
     }
