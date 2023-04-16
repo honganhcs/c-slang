@@ -96,7 +96,7 @@ export class DisallowedConstructError implements SourceError {
 export class FatalSyntaxError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation, public message: string) {}
+  public constructor(public location: es.SourceLocation, public message: string) { }
 
   public explain() {
     return this.message
@@ -110,7 +110,7 @@ export class FatalSyntaxError implements SourceError {
 export class MissingSemicolonError implements SourceError {
   public type = ErrorType.SYNTAX
   public severity = ErrorSeverity.ERROR
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Missing semicolon at the end of statement'
@@ -124,7 +124,7 @@ export class MissingSemicolonError implements SourceError {
 export class TrailingCommaError implements SourceError {
   public type: ErrorType.SYNTAX
   public severity: ErrorSeverity.WARNING
-  public constructor(public location: es.SourceLocation) {}
+  public constructor(public location: es.SourceLocation) { }
 
   public explain() {
     return 'Trailing comma'
@@ -893,15 +893,12 @@ class ExpressionGenerator implements CVisitor<es.Expression> {
       if (paramDeclarator.pointer()) {
         numPointers += paramDeclarator.pointer()!.Star().length
       }
-      if (paramDeclarator.parameterDirectDeclarator().arrayDimension()) {
-        numPointers += paramDeclarator.parameterDirectDeclarator().arrayDimension().length
-      }
     }
     const declarator: es.Identifier = {
       type: 'Identifier',
       name:
         ctx.parameterDeclarator()?.text != undefined
-          ? ctx.parameterDeclarator()!.parameterDirectDeclarator().Identifier().text
+          ? ctx.parameterDeclarator()!.Identifier().text
           : ''
     }
     return {

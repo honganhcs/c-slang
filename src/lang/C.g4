@@ -150,12 +150,7 @@ parameterDeclaration
     ;
 
 parameterDeclarator
-    :   pointer? parameterDirectDeclarator
-    ;
-
-parameterDirectDeclarator 
-    :   Identifier // for variables
-    |   Identifier arrayDimension+ // for arrays
+    :   pointer? Identifier
     ;
 
 identifierList
